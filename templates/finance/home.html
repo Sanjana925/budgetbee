@@ -1,0 +1,30 @@
+
+{% extends 'finance/base.html' %}
+{% load static %}
+{% block title %} Home - Budget Bee {% endblock %}
+
+{% block content %}
+<div class="center-content">
+
+    <!-- Hero Card -->
+    <div class="hero-card">
+        <img src="{% static 'images/rectangle713254-mmgn-800w.png' %}" alt="Hero card">
+        <div class="balance-info">
+            <span class="balance">2025.06 Balance</span>
+            <span class="amount">Rs. 0.00</span>
+            <span class="income">Total Income: 0</span>
+            <span class="expense">Total Expense: 0</span>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="cta-section">
+        <span class="cta-text">
+            "Looks like you don’t have an account yet. Create an account to begin."
+        </span>
+        <button class="add-account-btn">Add Account</button>
+    </div>
+
+
+</div>
+{% endblock %}

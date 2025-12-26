@@ -1,0 +1,65 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Bee</title>
+
+    <!-- This line of code is for the icon. -->
+    <link rel="icon" type="image/x-icon" href="{% static 'images/bee.png' %}">
+
+    <!-- These lines of code are for the font. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+
+    <!-- These lines of code are for linking the CSS. -->
+   
+    <link rel="stylesheet" type="text/css" href="{% static 'css/login.css' %}">
+</head>
+
+<body>
+<div class="wrapper" style="background-image: url({% static 'images/background.jpg' %});">
+
+        <div class="inner">
+            <div class="image-holder">
+                <img src="{% static 'images/login.png' %}" alt="">
+            </div>
+            <form action="{% url 'userauths:login' %}" method="POST">  
+                {% csrf_token %}
+                <h3>Log in</h3>
+
+                {% if messages %}
+                    <div class="alert alert-danger">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="form-wrapper">
+                    <label for="email">Email</label>  
+                    <input type="email" placeholder="Email" class="form-control" name="email" required>
+                    <i class="zmdi zmdi-account"></i>
+                </div>
+                <div class="form-wrapper">
+                    <label for="password">Your Password</label>
+                    <input type="password" placeholder="Your Password" class="form-control" name="password" required>
+                    <i class="zmdi zmdi-lock"></i>
+                </div>
+                <button type="submit" class="btn">
+                    Log in 
+                    <i class="zmdi zmdi-arrow-right"></i>
+                </button>
+                <div class="Signup">
+                    <p>Don't have an account? 
+                        <a href="{% url 'userauths:signup' %}" class="link">Sign up</a> 
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

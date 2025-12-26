@@ -1,0 +1,356 @@
+/* ==============================
+   1. GLOBAL VARIABLES
+   ============================== */
+/* Variables are like reusable values for colors, fonts, etc.
+   They make it easier to change your design consistently later. */
+:root {
+    --font-header: 'Montserrat', sans-serif;   /* Font used for headings like h1, h2, menu text */
+    --font-text: 'Crimson Pro', serif;        /* Font used for paragraphs, labels, small text */
+    --color-primary: #5667FF;                 /* Main blue color for buttons, highlights, icons */
+    --color-secondary: #D3D9E9;               /* Light blue background for the whole page */
+    --color-white: #FFFFFF;                    /* White color, used for cards and boxes */
+    --color-title: #5667FF;                    /* Blue color specifically for the logo/title text */
+    --color-heading: #000000;                  /* Black color for headings (h1-h6) */
+    --color-text: #333333;                     /* Dark gray color for normal text (paragraphs, spans) */
+    --color-subtitle: #555555;                /* Gray color for secondary text, subtitles, labels */
+}
+
+/* ==============================
+   2. BODY & PAGE CONTAINER
+   ============================== */
+/* The <body> is the main container for all content on the page */
+body {
+    margin: 0;                 /* Remove default space around the page */
+    padding: 0;                /* Remove default padding */
+    overflow: hidden;          /* Disable scrolling (no scrollbars) */
+    height: 100vh;             /* Height = 100% of viewport (visible screen) */
+    width: 100vw;              /* Width = 100% of viewport */
+    font-family: var(--font-text); /* Use main paragraph font for body */
+}
+
+/* Container that holds the three main columns: left, center, right */
+.page-container {
+    display: flex;                             /* Make child elements align horizontally (flex layout) */
+    height: 100vh;                             /* Take full screen height */
+    width: 100vw;                              /* Take full screen width */
+    background-color: var(--color-secondary); /* Light blue background for the page */
+    box-sizing: border-box;                     /* Padding and borders are included in width/height */
+}
+
+/* ==============================
+   3. HEADINGS AND TEXT
+   ============================== */
+/* Main title (h1) */
+h1 {
+    color: var(--color-title);                 /* Blue color for main titles */
+    font-family: var(--font-header);          /* Heading font */
+}
+
+/* h2-h6 headings */
+h2, h3, h4, h5, h6 {
+    color: var(--color-heading);               /* Black color for headings */
+    font-family: var(--font-header);          /* Heading font */
+}
+
+/* Paragraphs, span elements, labels */
+p, span, label {
+    color: var(--color-text);                  /* Dark gray for regular text */
+    font-family: var(--font-text);             /* Main text font */
+}
+
+/* ==============================
+   4. LEFT COLUMN / SIDEBAR
+   ============================== */
+/* All three columns get padding and box-sizing */
+.left-column,
+.center-column,
+.right-column {
+    padding: 20px;                             /* Add space inside columns */
+    box-sizing: border-box;                     /* Include padding in width/height */
+    overflow: hidden;                           /* Prevent inner scrolling */
+}
+
+/* Sidebar (left column) */
+.left-column {
+    flex: 3;                                   /* Sidebar takes 3/12 of horizontal space */
+    display: flex;                             /* Use flex layout for its children */
+    flex-direction: column;                    /* Stack children vertically */
+    background-color: transparent;             /* Let page background show through */
+}
+
+/* Logo at top of sidebar */
+.left-column .logo {
+    display: flex;                             /* Flex layout for image + text horizontally */
+    align-items: center;                       /* Vertically center items */
+    gap: 10px;                                 /* Space between image and text */
+    padding: 10px;                             /* Space inside logo box */
+    margin-bottom: 10px;                       /* Space below logo */
+    background-color: var(--color-white);      /* White background for logo box */
+    border-radius: 10px;                       /* Rounded corners */
+}
+
+/* Logo image */
+.left-column .logo img {
+    width: 30px;                               /* Image width */
+    height: 30px;                              /* Image height */
+}
+
+/* Logo text */
+.logo span {
+    color: var(--color-title);                 /* Blue text for logo */
+    font-family: var(--font-header);           /* Use heading font for logo */
+}
+
+/* Sidebar menu list */
+.left-column ul {
+    list-style: none;                          /* Remove bullet points */
+    padding: 0;                                /* Remove default padding */
+}
+
+.left-column ul li {
+    margin: 10px 0;                            /* Space between menu items */
+}
+
+/* Menu links */
+.left-column .menu li a {
+    display: flex;                             /* Flex layout for icon + text */
+    align-items: center;                        /* Center vertically */
+    gap: 10px;                                 /* Space between icon and text */
+    text-decoration: none;                     /* Remove underline */
+    color: var(--color-text);                  /* Dark gray text */
+    background-color: var(--color-secondary); /* Light blue background */
+    padding: 10px 15px;                        /* Space inside link */
+    border-radius: 10px;                       /* Rounded corners */
+    font-family: var(--font-header);           /* Heading font */
+    transition: 0.2s;                          /* Smooth hover effect */
+}
+
+/* Hover effect for menu */
+.left-column .menu li a:hover {
+    background-color: var(--color-white);      /* White background on hover */
+    color: var(--color-text);                  /* Keep text color */
+}
+
+/* Active menu link */
+.left-column .menu li a.active {
+    background-color: var(--color-white);      /* White background */
+    color: var(--color-text);                  /* Dark gray text */
+}
+
+/* Menu icon size */
+.left-column .menu li .icon {
+    font-size: 18px;                           /* Icon size in menu */
+}
+
+/* Settings link at bottom */
+.left-column .settings {
+    margin-top: auto;                           /* Push link to bottom */
+}
+
+.left-column .settings a {
+    display: flex;                              /* Flex layout */
+    align-items: center;                        
+    gap: 10px;                                  
+    text-decoration: none;                      
+    color: var(--color-text);                  
+    background-color: var(--color-secondary);  
+    padding: 10px 15px;                         
+    border-radius: 10px;                        
+    font-family: var(--font-header);           
+    transition: none;                           
+    cursor: default;                            
+}
+
+.left-column .settings a:hover {
+    background-color: var(--color-secondary);  
+    color: var(--color-text);                  
+}
+
+/* ==============================
+   5. CENTER COLUMN / MAIN CONTENT
+   ============================== */
+.center-column {
+    flex: 6;                                    /* Take 6/12 width (middle column) */
+    background-color: var(--color-white);      /* White background */
+    border-radius: 10px;                       
+    padding: 20px;                              /* Inner padding */
+    margin: 20px 0;                             /* Vertical spacing */
+    overflow: hidden;    
+    box-sizing: border-box;                     
+}
+
+/* ==============================
+   6. RIGHT COLUMN / USER & ACCOUNTS CARDS
+   ============================== */
+.right-column {
+    flex: 3;                                    /* Right column width */
+    display: flex;                              /* Flex layout for stacking cards vertically */
+    flex-direction: column;                     
+    gap: 10px;                                  /* Space between cards */
+    background-color: transparent;             
+    overflow: hidden;                           
+}
+
+/* General card style */
+.card {
+    background-color: var(--color-white);      /* White card background */
+    padding: 15px;                              /* Inner padding */
+    border-radius: 10px;                       
+    box-sizing: border-box;                     
+}
+
+/* Top card (user card) height ratio */
+.top-card {
+    flex: 7;                                    /* Takes more space */
+    min-height: 0;                              /* Prevent overflow */
+}
+
+/* Bottom card (accounts list) height ratio */
+.bottom-card {
+    flex: 5;                                    /* Slightly smaller than top card */
+    min-height: 0;                              /* Prevent overflow */
+}
+
+/* ==============================
+   6A. USER CARD SPECIFIC
+   ============================== */
+.user-card {
+    display: flex;                              /* Flex layout for stacking elements vertically */
+    flex-direction: column;                     
+    align-items: center;                        
+    text-align: center;                         
+    gap: 10px;                                  
+}
+
+/* User header: username and edit icon */
+.user-header {
+    width: 100%;                                /* Take full width */
+    display: flex;                              
+    justify-content: space-between;            /* Push username left, edit icon right */
+    font-weight: 600;                           
+    font-size: 14px;                            
+}
+
+/* Add account button in user card */
+.user-add-button {                               
+    width: 70px;                                
+    height: 70px;                               
+    background-color: var(--color-primary);     
+    border-radius: 50%;                          /* Circle button */
+    display: flex;                               
+    justify-content: center;                     
+    align-items: center;                         
+    font-size: 36px;                             
+    color: white;                                
+    cursor: pointer;                             
+    margin: 0 auto;                               /* Center horizontally */
+}
+
+/* Text below user card button */
+.user-account-text {
+    font-size: 14px;                             
+    color: var(--color-subtitle);               
+}
+
+/* Progress bars inside user card */
+.progress-bars {
+    width: 100%;                                 /* Full width */
+}
+
+.progress-row {
+    margin-top: 3px;                             
+}
+
+.progress-row .label {
+    display: block;                             
+    font-size: 12px;                             
+    color: #888;                                 
+    margin-bottom: 2px;                          
+}
+
+.progress {
+    width: 100%;                                 /* Full width of row */
+    height: 6px;                                 
+    background-color: #E0E0E0;                  
+    border-radius: 4px;                          
+}
+
+.progress-fill {
+    height: 100%;                               
+    border-radius: 4px;                          
+}
+
+.spent-fill {
+    background-color: #FF6B6B;                  /* Red bar for spent amount */
+}
+
+.earning-fill {
+    background-color: #4CAF50;                  /* Green bar for earnings */
+}
+
+/* ==============================
+   6B. ACCOUNTS CARD SPECIFIC
+   ============================== */
+.accounts-card {
+    display: flex;                  
+    flex-direction: column;         
+    gap: 6px;                        /* Space between account items */
+}
+
+.accounts-card h4 {
+    font-size: 20px;                
+    text-align: center;             
+    margin: 0 0 6px 0;              
+}
+
+.account-list {
+    list-style: none;               
+    padding: 0;                     
+    margin: 0;                      
+}
+
+.account-list li {
+    display: flex;                  
+    justify-content: space-between; /* Push amount to right */
+    padding: 4px 0;                 
+    font-size: 20px;                
+}
+/* ==============================
+   ACCOUNTS CARD - BOTTOM + BUTTON
+   ============================== */
+
+/* Container row for + button and text */
+.accounts-add-row {
+    display: flex;                 /* Make row horizontal */
+    align-items: center;           /* Center button and text vertically */
+    gap: 10px;                     /* Space between button and text */
+    margin-top: auto;              /* Push row to bottom of card */
+}
+
+/* Round + button */
+.accounts-add-button {
+    width: 32px;                   /* Width of button */
+    height: 32px;                  /* Height of button */
+    border-radius: 50%;            /* Make circle */
+    background-color: var(--color-primary); /* Primary color */
+    color: var(--color-white);     /* White + icon */
+    font-size: 20px;               /* Size of + */
+    display: flex;                 /* Use flex to center content */
+    justify-content: center;       /* Center horizontally */
+    align-items: center;           /* Center vertically */
+    line-height: 1;                /* Prevent vertical offset */
+    text-align: center;            /* Center text inside */
+    cursor: pointer;               /* Hand cursor */
+}
+
+/* Text next to + button */
+.accounts-add-text {
+    font-size: 20px;               /* Match account list text size */
+    color: var(--color-primary);   /* Same color as button */
+    cursor: pointer;               /* Hand cursor */
+}
+
+/* Hover effect for text */
+.accounts-add-text:hover {
+    text-decoration: underline;    /* Underline on hover */
+}

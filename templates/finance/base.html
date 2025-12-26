@@ -1,0 +1,140 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Budget Bee{% endblock %}</title>
+
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<div class="page-container">
+
+    <!-- ==========================
+         LEFT COLUMN / SIDEBAR
+         ========================== -->
+    <div class="left-column">
+
+        <!-- Logo -->
+        <div class="logo">
+            <img src="{% static 'images/bee.png' %}" alt="Bee Logo">
+            <span>Budget Bee</span>
+        </div>
+
+        <!-- Menu -->
+        <ul class="menu">
+            <li>
+                <a href="{% url 'finance:home' %}" class="{% if active == 'home' %}active{% endif %}">
+                    <span class="icon">🏠</span>
+                    Home
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'finance:chart' %}" class="{% if active == 'chart' %}active{% endif %}">
+                    <span class="icon">⏱️</span>
+                    Chart
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'finance:accounts' %}" class="{% if active == 'accounts' %}active{% endif %}">
+                    <span class="icon">💳</span>
+                    Accounts
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'finance:category' %}" class="{% if active == 'category' %}active{% endif %}">
+                    <span class="icon">📋</span>
+                    Category
+                </a>
+            </li>
+        </ul>
+
+        <!-- Settings pinned at bottom -->
+        <div class="settings">
+            <a href="{% url 'finance:settings' %}">
+                <span class="icon">⚙️</span>
+                Settings
+            </a>
+        </div>
+
+    </div>
+
+    <!-- ==========================
+         CENTER COLUMN / MAIN CONTENT
+         ========================== -->
+    <div class="center-column">
+        {% block content %}
+        <!-- Page-specific content goes here -->
+        {% endblock %}
+    </div>
+
+    <!-- ==========================
+         RIGHT COLUMN / USER & ACCOUNTS
+         ========================== -->
+    <div class="right-column">
+
+        <!-- Top Card: User Info -->
+        <div class="card top-card user-card">
+
+            <!-- User Header -->
+            <div class="user-header">
+                <span class="username">{{ request.user.username|default:"Guest" }}</span>
+                <span class="edit-icon">✏️</span>
+            </div>
+
+            <!-- Big user card button -->
+            <div class="user-add-button">+</div>
+            <div class="user-account-text">Add account</div>
+
+            <!-- Progress bars -->
+            <div class="progress-bars">
+                <div class="progress-row">
+                    <span class="label">Spent</span>
+                    <div class="progress">
+                        <div class="progress-fill spent-fill" style="width: 40%;"></div>
+                    </div>
+                </div>
+                <div class="progress-row">
+                    <span class="label">Earning</span>
+                    <div class="progress">
+                        <div class="progress-fill earning-fill" style="width: 60%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Card: Accounts List -->
+        <div class="card bottom-card accounts-card">
+            <h4>Accounts</h4>
+
+            <!-- Account List -->
+            <ul class="account-list">
+                <li><span>🏦 Bank</span> <span>Rs 0.00</span></li>
+                <li><span>💳 Card</span> <span>Rs 0.00</span></li>
+                <li><span>💸 Esewa</span> <span>Rs 0.00</span></li>
+                <li><span>💰 Cash</span> <span>Rs 0.00</span></li>
+            </ul>
+
+            <!-- Bottom row for + button -->
+            <div class="accounts-add-row">
+                <div class="accounts-add-button">+</div>
+                <div class="accounts-add-text">Add account</div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
