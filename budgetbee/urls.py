@@ -9,4 +9,5 @@ urlpatterns = [
     path('user/', include('userauths.urls')),  # already has app_name in userauths/urls.py
 ]
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

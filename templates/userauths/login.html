@@ -49,6 +49,10 @@
                     <input type="password" placeholder="Your Password" class="form-control" name="password" required>
                     <i class="zmdi zmdi-lock"></i>
                 </div>
+                <div class="forgot-password">
+                 <a href="{% url 'userauths:password_reset' %}">Forgot Password?</a>
+                </div>
+
                 <button type="submit" class="btn">
                     Log in 
                     <i class="zmdi zmdi-arrow-right"></i>

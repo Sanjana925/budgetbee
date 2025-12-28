@@ -8,5 +8,5 @@ urlpatterns = [
     path('chart/', views.chart, name='chart'),
     path('accounts/', views.accounts, name='accounts'),
     path('category/', views.category, name='category'),
-        path('settings/', views.settings, name='settings'),
+    path('settings/', views.settings, name='settings'),
 ]

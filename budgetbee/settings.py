@@ -133,13 +133,31 @@ STATICFILES_DIRS =[
 ]
 #STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-MEDIA_URL = '/images/'
-MEDIA_ROOT = os.path.join(BASE_DIR,'static/images')
-
-
+# Media files (user uploads)
+MEDIA_URL = '/media/'
+MEDIAFILES_DIRS =[
+    os.path.join(BASE_DIR, 'media')
+]
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'userauths.User'
+# Redirect URLs after login/logout
+LOGIN_REDIRECT_URL = 'finance:base'
+LOGOUT_REDIRECT_URL = 'finance:base'
+
+
+# For development: emails will print in the console
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# In production, you will configure SMTP like this:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = os.getenv('EMAIL_HOST')
+# EMAIL_PORT = os.getenv('EMAIL_PORT')
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = os.getenv('EMAIL_USER')
+# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')
+DEFAULT_FROM_EMAIL = 'Budget Bee <noreply@budgetbee.com>'
