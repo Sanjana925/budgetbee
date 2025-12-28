@@ -19,67 +19,56 @@
 
 <div class="page-container">
 
-    <!-- ==========================
-         LEFT COLUMN / SIDEBAR
-         ========================== -->
+    <!-- Sidebar / Left Column -->
     <div class="left-column">
 
-        <!-- Logo -->
+        <!-- Logo Section -->
         <div class="logo">
             <img src="{% static 'images/bee.png' %}" alt="Bee Logo">
             <span>Budget Bee</span>
         </div>
 
-        <!-- Menu -->
+        <!-- Navigation Menu -->
         <ul class="menu">
             <li>
                 <a href="{% url 'finance:home' %}" class="{% if active == 'home' %}active{% endif %}">
-                    <span class="icon">🏠</span>
-                    Home
+                    <span class="icon">🏠</span> Home
                 </a>
             </li>
             <li>
                 <a href="{% url 'finance:chart' %}" class="{% if active == 'chart' %}active{% endif %}">
-                    <span class="icon">⏱️</span>
-                    Chart
+                    <span class="icon">⏱️</span> Chart
                 </a>
             </li>
             <li>
                 <a href="{% url 'finance:accounts' %}" class="{% if active == 'accounts' %}active{% endif %}">
-                    <span class="icon">💳</span>
-                    Accounts
+                    <span class="icon">💳</span> Accounts
                 </a>
             </li>
             <li>
                 <a href="{% url 'finance:category' %}" class="{% if active == 'category' %}active{% endif %}">
-                    <span class="icon">📋</span>
-                    Category
+                    <span class="icon">📋</span> Category
                 </a>
             </li>
         </ul>
 
-        <!-- Settings pinned at bottom -->
+        <!-- Settings Link -->
         <div class="settings">
             <a href="{% url 'finance:settings' %}">
-                <span class="icon">⚙️</span>
-                Settings
+                <span class="icon">⚙️</span> Settings
             </a>
         </div>
 
     </div>
 
-    <!-- ==========================
-         CENTER COLUMN / MAIN CONTENT
-         ========================== -->
+    <!-- Main Content / Center Column -->
     <div class="center-column">
         {% block content %}
-        <!-- Page-specific content goes here -->
+        <!-- Page-specific content will be injected here -->
         {% endblock %}
     </div>
 
-    <!-- ==========================
-         RIGHT COLUMN / USER & ACCOUNTS
-         ========================== -->
+    <!-- Cards Section /Right Column  -->
     <div class="right-column">
 
         <!-- Top Card: User Info -->
@@ -91,20 +80,22 @@
                 <span class="edit-icon">✏️</span>
             </div>
 
-            <!-- Big user card button -->
-            <div class="user-add-button">+</div>
-            <div class="user-account-text">Add account</div>
+            <!-- Create Account Button -->
+            <div class="user-add-button">
+                <img src="{% static 'icons/plus.svg' %}" alt="Add">
+            </div>
+            <div class="user-account-text">Create account</div>
 
-            <!-- Progress bars -->
+            <!-- Progress Bars -->
             <div class="progress-bars">
                 <div class="progress-row">
-                    <span class="label">Spent</span>
+                    <span class="label">Earning</span>
                     <div class="progress">
                         <div class="progress-fill spent-fill" style="width: 40%;"></div>
                     </div>
                 </div>
                 <div class="progress-row">
-                    <span class="label">Earning</span>
+                    <span class="label">Spent</span>
                     <div class="progress">
                         <div class="progress-fill earning-fill" style="width: 60%;"></div>
                     </div>
@@ -124,17 +115,13 @@
                 <li><span>💰 Cash</span> <span>Rs 0.00</span></li>
             </ul>
 
-            <!-- Bottom row for + button -->
+            <!-- Add Account Button -->
             <div class="accounts-add-row">
                 <div class="accounts-add-button">+</div>
                 <div class="accounts-add-text">Add account</div>
             </div>
-
         </div>
-
     </div>
-
 </div>
-
 </body>
 </html>

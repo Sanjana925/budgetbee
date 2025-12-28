@@ -1,0 +1,328 @@
+/* Global variables */
+:root {
+    --font-header: 'Montserrat', sans-serif; /* Font used for headings */
+    --font-text: 'Crimson Pro', serif;       /* Font used for body text */
+    --color-primary: #5667FF;                /* Main blue color */
+    --color-secondary: #D3D9E9;              /* Light blue background color */
+    --color-white: #FFFFFF;                   /* White color */
+    --color-title: #5667FF;                   /* Title text color */
+    --color-heading: #000000;                 /* Headings color */
+    --color-text: #333333;                    /* Normal text color */
+    --color-subtitle: #555555;               /* Secondary text color */
+}
+
+/* Body & page container */
+body {
+    margin: 0;                                /* Remove default margin */
+    padding: 0;                               /* Remove default padding */
+    overflow: hidden;                         /* Prevent page scrolling */
+    height: 100vh;                            /* Full viewport height */
+    width: 100vw;                             /* Full viewport width */
+    font-family: var(--font-text);            /* Set default font */
+}
+
+.page-container {
+    display: flex;                            /* Use flexbox for columns */
+    height: 100vh;                            /* Full height of viewport */
+    width: 100vw;                             /* Full width of viewport */
+    background-color: var(--color-secondary); /* Page background color */
+    box-sizing: border-box;                   /* Include padding/border in width */
+}
+
+/* Headings and text */
+h1 {
+    color: var(--color-title);                /* Set color of h1 */
+    font-family: var(--font-header);          /* Font for h1 headings */
+}
+
+h2, h3, h4, h5, h6 {
+    color: var(--color-heading);              /* Headings color */
+    font-family: var(--font-header);          /* Font for h2-h6 headings */
+}
+
+p, span, label {
+    color: var(--color-text);                 /* Normal text color */
+    font-family: var(--font-text);            /* Font for text */
+}
+
+/* Left column / sidebar */
+.left-column,
+.center-column,
+.right-column {
+    padding: 20px;                            /* Inner spacing for all columns */
+    box-sizing: border-box;                   /* Include padding in width/height */
+    overflow: hidden;                         /* Prevent inner scrollbars */
+}
+
+.left-column {
+    flex: 3;                                  /* Sidebar takes 3/12 width */
+    display: flex;                            /* Flex layout */
+    flex-direction: column;                   /* Stack children vertically */
+    background-color: transparent;            /* Transparent background */
+}
+
+.left-column .logo {
+    display: flex;                            /* Flex for logo content */
+    align-items: center;                      /* Vertical alignment center */
+    gap: 10px;                                /* Space between items */
+    padding: 10px;                            /* Inner padding */
+    margin-bottom: 10px;                      /* Space below logo */
+    background-color: var(--color-white);     /* White background */
+    border-radius: 10px;                      /* Rounded corners */
+}
+
+.left-column .logo img {
+    width: 30px;                              /* Logo image width */
+    height: 30px;                             /* Logo image height */
+}
+
+.logo span {
+    color: var(--color-title);                /* Logo text color */
+    font-family: var(--font-header);          /* Logo font */
+}
+
+.left-column ul {
+    list-style: none;                         /* Remove bullets from list */
+    padding: 0;                               /* Remove padding */
+}
+
+.left-column ul li {
+    margin: 10px 0;                           /* Space between list items */
+}
+
+.left-column .menu li a {
+    display: flex;                            /* Flex layout for icon + text */
+    align-items: center;                      /* Center vertically */
+    gap: 10px;                                /* Space between icon & text */
+    text-decoration: none;                    /* Remove underline */
+    color: var(--color-text);                 /* Text color */
+    background-color: var(--color-secondary); /* Link background */
+    padding: 10px 15px;                       /* Inner padding */
+    border-radius: 10px;                      /* Rounded corners */
+    font-family: var(--font-header);          /* Font for menu items */
+    transition: 0.2s;                         /* Smooth hover effect */
+}
+
+.left-column .menu li a:hover {
+    background-color: var(--color-white);     /* Hover background */
+    color: var(--color-text);                 /* Hover text color */
+}
+
+.left-column .menu li a.active {
+    background-color: var(--color-white);     /* Active background */
+    color: var(--color-text);                 /* Active text color */
+}
+
+.left-column .menu li .icon {
+    font-size: 18px;                          /* Icon size */
+}
+
+.left-column .settings {
+    margin-top: auto;                          /* Push to bottom */
+}
+
+.left-column .settings a {
+    display: flex;                             /* Flex layout */
+    align-items: center;                       /* Vertical align center */
+    gap: 10px;                                 /* Space between icon & text */
+    text-decoration: none;                     /* Remove underline */
+    color: var(--color-text);                  /* Text color */
+    background-color: var(--color-secondary); /* Background color */
+    padding: 10px 15px;                        /* Inner padding */
+    border-radius: 10px;                       /* Rounded corners */
+    font-family: var(--font-header);           /* Font */
+    transition: none;                          /* No hover transition */
+    cursor: default;                           /* Default cursor */
+}
+
+.left-column .settings a:hover {
+    background-color: var(--color-secondary); /* Hover background */
+    color: var(--color-text);                  /* Hover text */
+}
+
+/* Center column / main content */
+.center-column {
+    flex: 6;                                   /* Middle column width */
+    background-color: var(--color-white);      /* Background color */
+    border-radius: 10px;                       /* Rounded corners */
+    padding: 20px;                             /* Inner padding */
+    margin: 20px 0;                            /* Vertical margin */
+    overflow: hidden;                          /* Hide overflow */
+    box-sizing: border-box;                    /* Include padding in size */
+}
+
+/* Right column / user & accounts cards */
+.right-column {
+    flex: 3;                                   /* Right column width */
+    display: flex;                             /* Flex layout */
+    flex-direction: column;                    /* Stack cards vertically */
+    gap: 10px;                                 /* Space between cards */
+    background-color: transparent;             /* Transparent background */
+    overflow: hidden;                          /* Hide overflow */
+}
+
+.card {
+    background-color: var(--color-white);      /* Card background */
+    padding: 15px;                             /* Inner padding */
+    border-radius: 10px;                       /* Rounded corners */
+    box-sizing: border-box;                    /* Include padding in width */
+}
+
+.top-card {
+    flex: 7;                                   /* Take more vertical space */
+    min-height: 0;                             /* Prevent overflow */
+}
+
+.bottom-card {
+    flex: 5;                                   /* Take less vertical space */
+    min-height: 0;                             /* Prevent overflow */
+}
+
+/* User card specific */
+.user-card {
+    display: flex;                             /* Flex layout */
+    flex-direction: column;                    /* Stack vertically */
+    align-items: center;                        /* Center horizontally */
+    text-align: center;                        /* Center text */
+    gap: 30px;                                 /* Space between elements */
+}
+
+.user-header {
+    width: 100%;                               /* Full width */
+    display: flex;                             /* Flex layout */
+    justify-content: space-between;            /* Spread username and icon */
+    font-weight: 600;                           /* Bold text */
+    font-size: 24px;                            /* Text size */
+}
+
+.user-add-button {
+    position: relative;                         /* Relative for pseudo element */
+    width: 100px;                               /* Width of button */
+    height: 100px;                              /* Height of button */
+    background-color: var(--color-primary);     /* Button color */
+    border-radius: 50%;                          /* Make circle */
+    display: flex;                              /* Flex layout */
+    justify-content: center;                     /* Center horizontally */
+    align-items: center;                        /* Center vertically */
+    color: white;                               /* Icon color */
+    cursor: pointer;                             /* Pointer on hover */
+}
+
+.user-add-button::before {
+    content: "";                                /* Empty content for border */
+    position: absolute;                         /* Position relative to button */
+    width: 110px;                               /* Slightly bigger than button */
+    height: 110px;                              /* Slightly bigger than button */
+    border-radius: 50%;                         /* Circle border */
+    border: 4px solid var(--color-primary);     /* Border color */
+    top: 50%;                                   /* Center vertically */
+    left: 50%;                                  /* Center horizontally */
+    transform: translate(-50%, -50%);          /* Center alignment */
+}
+
+.user-add-button img {
+    width: 75px;                                /* Image width */
+    height: 75px;                               /* Image height */
+}
+
+.user-account-text {
+    font-size: 20px;                            /* Text size */
+    color: var(--color-subtitle);               /* Subtitle color */
+}
+
+.progress-bars {
+    width: 100%;                                /* Full width for progress bars */
+}
+
+.progress-row {
+    display: flex;                              /* Flex layout */
+    flex-direction: column;                     /* Stack vertically */
+    gap: 10px;                                  /* Space between label and bar */
+    margin-top: 6px;                             /* Top margin */
+}
+
+.progress-row .label {
+    text-align: left;                           /* Align label to left */
+    display: block;                             /* Block element */
+    font-size: 16px;                             /* Label font size */
+    color: var(--color-primary);                 /* Label color */
+    margin-bottom: 8px;                          /* Space below label */
+}
+
+.progress {
+    width: 100%;                                /* Full width of row */
+    height: 10px;                               /* Height of bar */
+    background-color: white;                     /* Bar background */
+    border-radius: 8px;                          /* Rounded edges */
+}
+
+.progress-fill {
+    height: 100%;                               /* Fill full height */
+    border-radius: 8px;                          /* Rounded edges */
+}
+
+.spent-fill {
+    background-color: var(--color-secondary);    /* Color for spent amount */
+}
+
+.earning-fill {
+    background-color: var(--color-secondary);    /* Color for earnings */
+}
+
+/* Accounts card specific */
+.accounts-card {
+    display: flex;                              /* Flex layout */
+    flex-direction: column;                     /* Stack vertically */
+    gap: 6px;                                   /* Space between items */
+}
+
+.accounts-card h4 {
+    font-size: 20px;                            /* Heading font size */
+    text-align: center;                         /* Center heading */
+    margin: 0 0 6px 0;                          /* Margin below heading */
+}
+
+.account-list {
+    list-style: none;                            /* Remove bullets */
+    padding: 0;                                  /* Remove padding */
+    margin: 0;                                   /* Remove margin */
+}
+
+.account-list li {
+    display: flex;                               /* Flex layout */
+    justify-content: space-between;             /* Spread text and amount */
+    padding: 4px 0;                              /* Vertical padding */
+    font-size: 20px;                             /* Font size */
+}
+
+.accounts-add-row {
+    display: flex;                               /* Flex layout */
+    align-items: center;                         /* Center vertically */
+    gap: 10px;                                   /* Space between items */
+    margin-top: auto;                             /* Push to bottom */
+}
+
+.accounts-add-button {
+    width: 32px;                                 /* Button width */
+    height: 32px;                                /* Button height */
+    border-radius: 50%;                          /* Circle shape */
+    background-color: var(--color-primary);      /* Button color */
+    color: var(--color-white);                   /* Icon color */
+    font-size: 20px;                             /* Icon size */
+    display: flex;                               /* Flex layout */
+    justify-content: center;                     /* Center horizontally */
+    align-items: center;                         /* Center vertically */
+    line-height: 1;                              /* Adjust line height */
+    text-align: center;                          /* Center text */
+    cursor: pointer;                             /* Pointer on hover */
+}
+
+.accounts-add-text {
+    font-size: 20px;                             /* Text size */
+    color: var(--color-primary);                 /* Text color */
+    cursor: pointer;                             /* Pointer cursor */
+}
+
+.accounts-add-text:hover {
+    text-decoration: underline;                  /* Underline on hover */
+}
