@@ -1,9 +1,11 @@
+<!-- finance/category.html -->
 {% extends 'finance/base.html' %}
 {% load static %}
 
 {% block title %}Category - Budget Bee{% endblock %}
 
 {% block extra_css %}
+<!-- Category CSS -->
 <link rel="stylesheet" href="{% static 'css/category.css' %}">
 {% endblock %}
 
@@ -11,32 +13,31 @@
 
 <div class="category-container">
 
-    <!-- ===== HEADER (TOGGLE + ADD) ===== -->
+    <!-- HEADER: Toggle + Add -->
     <div class="category-header">
 
         <!-- Toggle Buttons -->
         <div class="toggle">
-            <a href="?type=expense" class="toggle-btn {% if category_type == 'expense' %}active{% endif %}">Expense</a>
-            <a href="?type=income" class="toggle-btn {% if category_type == 'income' %}active{% endif %}">Income</a>
+            <a href="?type=expense" class="toggle-btn {% if category_type == "expense" %}active{% endif %}">Expense</a>
+            <a href="?type=income" class="toggle-btn {% if category_type == "income" %}active{% endif %}">Income</a>
         </div>
 
         <!-- Add Category Button -->
-        <button class="add-btn" data-bs-toggle="modal" data-bs-target="#categoryModal">+</button>
+        <a href="{% url 'finance:add-category' %}" class="add-btn">+</a>
 
     </div>
 
-    <!-- ===== CATEGORY LIST ===== -->
+    <!-- CATEGORY LIST -->
     <div class="category-list">
-
         {% if categories %}
             {% for cat in categories %}
-            <div class="category-item" style="--cat-color: {{ cat.color|default:'#FFC107' }};">
+            <div class="category-item">
                 <div class="left">
                     <span class="icon">{{ cat.icon }}</span>
                     <span class="name">{{ cat.name }}</span>
                 </div>
                 <div class="right">
-                    <a href="{% url 'finance:edit-category' cat.id %}" data-bs-toggle="modal" data-bs-target="#categoryModal">✏️</a>
+                    <a href="{% url 'finance:edit-category' cat.id %}">✏️</a>
                     <a href="{% url 'finance:delete-category' cat.id %}">🗑️</a>
                 </div>
             </div>
@@ -44,12 +45,8 @@
         {% else %}
             <p class="empty-text">No categories yet</p>
         {% endif %}
-
     </div>
 
 </div>
-
-<!-- ===== CATEGORY MODAL ===== -->
-{% include 'finance/category_modal.html' %}
 
 {% endblock %}

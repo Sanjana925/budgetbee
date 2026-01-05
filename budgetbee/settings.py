@@ -149,6 +149,7 @@ AUTH_USER_MODEL = 'userauths.User'
 # Redirect URLs after login/logout
 LOGIN_REDIRECT_URL = 'finance:base'
 LOGOUT_REDIRECT_URL = 'finance:base'
+LOGIN_URL = '/user/login'  # or whatever matches your login view
 
 
 # For development: emails will print in the console

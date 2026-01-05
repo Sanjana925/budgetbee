@@ -1,16 +1,19 @@
-const ctx = document.getElementById('chartCanvas');
+// finance/js/chart.js
+const ctx = document.getElementById('chartCanvas'); // Chart canvas
 let chart;
 
 // Category colors from backend
 const categoryColors = JSON.parse('{{ category_colors_json|escapejs }}');
 
+// Render pie/doughnut chart
 function renderChart(type) {
-    if (chart) chart.destroy();
+    if (chart) chart.destroy(); // Remove old chart
 
     const dataObj = type === 'expense' ? expenseData : incomeData;
     const labels = Object.keys(dataObj);
     const values = Object.values(dataObj);
 
+    // Show empty text if no data
     if (!values.length) {
         document.getElementById('chartEmpty').style.display = "block";
         return;
@@ -54,10 +57,10 @@ function renderChart(type) {
         }]
     });
 
-    populateMonthlyTable(type);
+    populateMonthlyTable(type); // Update table
 }
 
-// ---------------- Monthly Table ----------------
+// ---------------- Populate Monthly Table ----------------
 function populateMonthlyTable(type) {
     const tbody = document.getElementById('monthlyTotalsBody');
     tbody.innerHTML = "";
@@ -69,12 +72,11 @@ function populateMonthlyTable(type) {
         const balance = item.income - item.expense;
 
         // Color legend for active categories
-        const colorCells = labels.map(l => 
-            `<span style="display:inline-block;width:12px;height:12px;background:${categoryColors[l]};margin-right:6px;border-radius:3px;"></span>${l}`
+        const colorCells = labels.map(l =>
+            `<span style="display:inline-block;width:12px;height:12px;background:${categoryColors[l] || '#ddd'};margin-right:6px;border-radius:3px;"></span>${l}`
         ).join('<br>');
 
         const row = `<tr>
-            <td>${colorCells}</td>
             <td>${item.date}</td>
             <td>${item.expense.toLocaleString()}</td>
             <td>${item.income.toLocaleString()}</td>
@@ -84,5 +86,5 @@ function populateMonthlyTable(type) {
     });
 }
 
-// Initial chart
+// Initial render
 renderChart('expense');

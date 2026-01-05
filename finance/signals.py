@@ -6,16 +6,28 @@ from .models import Category, Account
 
 # Default categories per new user
 DEFAULT_CATEGORIES = {
-    "income":[("Salary","💼"),("Business","🏢"),("Gift","🎁"),("Investment","📈"),("Other Income","💵")],
-    "expense":[("Food","🍔"),("Transport","🚌"),("Shopping","🛍️"),("Bills","💡"),("Entertainment","🎬")]
+    "income": [
+        ("Salary", "💼", "#4CAF50"),
+        ("Business", "🏢", "#2196F3"),
+        ("Gift", "🎁", "#FF9800"),
+        ("Investment", "📈", "#9C27B0"),
+        ("Other Income", "💵", "#00BCD4")
+    ],
+    "expense": [
+        ("Food", "🍔", "#FF5722"),
+        ("Transport", "🚌", "#795548"),
+        ("Shopping", "🛍️", "#E91E63"),
+        ("Bills", "💡", "#FFC107"),
+        ("Entertainment", "🎬", "#3F51B5")
+    ]
 }
 
 @receiver(post_save, sender=User)
 def create_default_categories(sender, instance, created, **kwargs):
     if created:
         for c_type, items in DEFAULT_CATEGORIES.items():
-            for name, icon in items:
-                Category.objects.create(user=instance, name=name, type=c_type, icon=icon)
+            for name, icon, color in items:
+                Category.objects.create(user=instance, name=name, type=c_type, icon=icon, color=color)
 
 # Default accounts per new user
 DEFAULT_ACCOUNTS = [("Bank","🏦",0.0),("Card","💳",0.0),("Cash","💰",0.0),("Saving","🐖",0.0)]

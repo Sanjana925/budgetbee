@@ -7,11 +7,6 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from .forms import AccountForm, CategoryForm
 from .models import Account, Category, Transaction, Customer
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
-from .models import Transaction
-import json
 
 # Home dashboard
 @login_required
@@ -54,48 +49,62 @@ def add_transaction(request):
 
     return render(request, 'finance/transaction_modal.html', {'accounts':accounts,'categories':categories,'today':today})
 
-# Chartsimport json
+# Chart view
+# finance/views.py
+import json
+from django.db.models import Sum
+from django.utils import timezone
 
-
+@login_required
 def chart(request):
-    user = request.user
+    # Get all transactions for the user
+    transactions = Transaction.objects.filter(account__user=request.user).select_related('category')
 
-    # Transactions grouped by category
-    expense_trans = Transaction.objects.filter(customer__user=user, type='expense')
-    income_trans = Transaction.objects.filter(customer__user=user, type='income')
+    # Prepare income and expense category totals
+    income_data = {}
+    expense_data = {}
+    category_colors = {}
 
-    # Sum by category
-    expense_data = expense_trans.values('category__name').annotate(total=Sum('amount'))
-    income_data = income_trans.values('category__name').annotate(total=Sum('amount'))
+    categories = Category.objects.filter(user=request.user)
+    for cat in categories:
+        category_colors[cat.name] = cat.color if hasattr(cat, 'color') else '#ddd'  # default color
 
-    # Prepare dictionaries for Chart.js
-    expense_json = {item['category__name']: float(item['total']) for item in expense_data}
-    income_json = {item['category__name']: float(item['total']) for item in income_data}
+    for t in transactions:
+        target_dict = income_data if t.type == "income" else expense_data
+        if t.category.name in target_dict:
+            target_dict[t.category.name] += t.amount
+        else:
+            target_dict[t.category.name] = t.amount
 
-    # Monthly totals
+    # Prepare monthly totals
     monthly_data = []
-    months = Transaction.objects.filter(customer__user=user).dates('date', 'month')
+    # Group transactions by month
+    from django.db.models.functions import TruncMonth
+    monthly_qs = transactions.annotate(month=TruncMonth('date')).values('month').order_by('month')
+    months = sorted(set(item['month'] for item in monthly_qs))
+
     for m in months:
-        month_exp = expense_trans.filter(date__year=m.year, date__month=m.month).aggregate(Sum('amount'))['amount__sum'] or 0
-        month_inc = income_trans.filter(date__year=m.year, date__month=m.month).aggregate(Sum('amount'))['amount__sum'] or 0
+        month_income = transactions.filter(date__year=m.year, date__month=m.month, type='income').aggregate(total=Sum('amount'))['total'] or 0
+        month_expense = transactions.filter(date__year=m.year, date__month=m.month, type='expense').aggregate(total=Sum('amount'))['total'] or 0
         monthly_data.append({
-            'date': m.strftime("%b %Y"),
-            'expense': float(month_exp),
-            'income': float(month_inc),
+            "date": m.strftime("%b %Y"),
+            "income": float(month_income),
+            "expense": float(month_expense)
         })
 
-    # Category colors
-    categories = Category.objects.filter(user=user)
-    category_colors = {cat.name: cat.color for cat in categories}
+    # Ensure JSON serializable
+    income_json = json.dumps({k: float(v) for k, v in income_data.items()})
+    expense_json = json.dumps({k: float(v) for k, v in expense_data.items()})
+    monthly_json = json.dumps(monthly_data)
+    category_colors_json = json.dumps(category_colors)
 
-    context = {
-        'expense_json': json.dumps(expense_json),
-        'income_json': json.dumps(income_json),
-        'monthly_json': json.dumps(monthly_data),
-        'category_colors_json': json.dumps(category_colors),
-    }
-    return render(request, 'finance/chart.html', context)
-
+    return render(request, 'finance/chart.html', {
+        'active': 'chart',
+        'income_json': income_json,
+        'expense_json': expense_json,
+        'monthly_json': monthly_json,
+        'category_colors_json': category_colors_json,
+    })
 
 # Category list
 @login_required
