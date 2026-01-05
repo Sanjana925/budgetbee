@@ -11,7 +11,7 @@ urlpatterns = [
 
     # Profile / edit user info
     path('profile/', views.profile_view, name='profile'),
-    path('change-password/', views.profile_view, name='change_password'),
+    path('change-password/', views.change_password_view, name='change_password'),
 
     # Password reset / forgot password
     path('password-reset/', views.CustomPasswordResetView.as_view(), name='password_reset'),

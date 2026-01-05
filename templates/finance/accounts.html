@@ -1,8 +1,94 @@
 {% extends 'finance/base.html' %}
+{% load static %}
 
 {% block title %}Accounts - Budget Bee{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/accounts.css' %}">
+{% endblock %}
+
 {% block content %}
 <h1>Accounts Page</h1>
-<p>Here you can see all accounts.</p>
+
+<div class="accounts-summary">
+    <div class="summary-card">All Accounts Total: Rs {{ total_balance|floatformat:2 }}</div>
+    <div class="summary-card">Expenses so far: Rs {{ expenses|floatformat:2 }}</div>
+    <div class="summary-card">Income so far: Rs {{ income|floatformat:2 }}</div>
+</div>
+
+<div class="accounts-cards">
+    {% for account in accounts %}
+    <div class="account-card">
+        <span>{{ account.icon }} {{ account.name }}</span>
+        <div class="account-actions">
+            <button class="edit-btn" data-id="{{ account.id }}" data-name="{{ account.name }}" data-balance="{{ account.balance }}" data-icon="{{ account.icon }}">Edit</button>
+            <button class="delete-btn" data-id="{{ account.id }}" data-name="{{ account.name }}">Delete</button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="add-account-btn">
+    <button id="openAddAccount">+ Add New Account</button>
+</div>
+
+<!-- Add/Edit Popup -->
+<div class="popup-overlay" id="popupOverlay">
+    <div class="popup-card">
+        <h3 id="popupTitle">Add New Account</h3>
+        <form method="post" id="accountForm">{% csrf_token %}
+            <label for="id_initial_amount">Initial Amount:</label>
+            <input type="number" name="initial_amount" id="id_initial_amount" value="0.0" step="0.01">
+
+            <label for="id_name">Name:</label>
+            <input type="text" name="name" id="id_name" value="Untitled">
+
+            <label for="id_icon">Icon:</label>
+            <input type="text" name="icon" id="id_icon" placeholder="Select icon">
+
+            <div class="popup-actions">
+                <button type="button" id="cancelPopup">Cancel</button>
+                <button type="submit" id="savePopup">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Popup -->
+<div class="popup-overlay" id="deleteOverlay">
+    <div class="popup-card">
+        <h3>Delete Account</h3>
+        <p id="deleteMessage"></p>
+        <form method="post" id="deleteForm">{% csrf_token %}
+            <div class="popup-actions">
+                <button type="button" id="cancelDelete">Cancel</button>
+                <button type="submit">Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Login Required Popup -->
+<div class="popup-overlay" id="loginOverlay">
+    <div class="popup-card">
+        <h3>Login Required</h3>
+        <p>You must be logged in to perform this action.</p>
+        <div class="popup-actions">
+            <button type="button" id="cancelLogin">Cancel</button>
+            <a href="{% url 'userauths:login' %}"><button type="button">Go to Login</button></a>
+        </div>
+    </div>
+</div>
+
+<!-- URLs & Auth Data -->
+<div id="accountsData"
+     data-add-url="{% url 'finance:accounts' %}"
+     data-edit-url="{% url 'finance:edit_account' 0 %}"
+     data-delete-url="{% url 'finance:delete_account' 0 %}"
+     data-is-authenticated="{{ is_authenticated|yesno:'true,false' }}"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/accounts.js' %}"></script>
 {% endblock %}

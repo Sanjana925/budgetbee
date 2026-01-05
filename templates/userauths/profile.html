@@ -3,14 +3,18 @@
 
 {% block title %}Profile Settings{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="profile-container">
-    <h2>Profile Settings</h2>
+<div class="profile-inner-container">
+    <h1>Profile Settings</h1>
 
     {% if messages %}
         <ul class="messages">
             {% for message in messages %}
-                <li>{{ message }}</li>
+                <li class="{{ message.tags }}">{{ message }}</li>
             {% endfor %}
         </ul>
     {% endif %}
@@ -29,20 +33,50 @@
         <div class="form-wrapper">
             <label for="avatar">Profile Avatar</label>
             {% if request.user.profile_image %}
-                <img src="{{ request.user.profile_image.url }}" alt="Avatar" width="100">
+                <img src="{{ request.user.profile_image.url }}" alt="Avatar">
             {% else %}
-                <img src="{% static 'icons/default_avatar.png' %}" alt="Default Avatar" width="100">
+                <img src="{% static 'icons/default_avatar.png' %}" alt="Default Avatar">
             {% endif %}
             <input type="file" name="avatar">
             <button type="submit" name="update_avatar">Update Avatar</button>
         </div>
 
-        <!-- Change Password -->
-        <div class="form-wrapper">
-            <h3>Change Password</h3>
+   <!-- Change Password Button -->
+<div class="form-wrapper">
+    <button type="button" id="open-password-modal" class="btn-change-password">
+        Change Password
+    </button>
+</div>
+
+<!-- Password Modal -->
+<div id="password-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Change Password</h2>
+
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="POST">
+            {% csrf_token %}
             {{ form.as_p }}
-            <button type="submit" name="change_password">Change Password</button>
-        </div>
+            <button type="submit" name="change_password">Update Password</button>
+        </form>
+    </div>
+</div>
+
+    <!-- Logout -->
+    <form method="POST" action="{% url 'userauths:logout' %}" class="logout-form">
+        {% csrf_token %}
+        <button type="submit" class="logout-btn">Logout</button>
     </form>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/password_modal.js' %}"></script>
 {% endblock %}

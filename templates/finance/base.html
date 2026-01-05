@@ -7,7 +7,7 @@
 
     <!-- Global CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-
+{% block extra_css %}{% endblock %}
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -151,12 +151,16 @@
             <h4>Accounts</h4>
 
             <!-- Account List -->
-            <ul class="account-list">
-                <li><span>🏦 Bank</span> <span>Rs 0.00</span></li>
-                <li><span>💳 Card</span> <span>Rs 0.00</span></li>
-                <li><span>💸 Esewa</span> <span>Rs 0.00</span></li>
-                <li><span>💰 Cash</span> <span>Rs 0.00</span></li>
-            </ul>
+             <ul class="account-list">
+    {% for account in user_accounts %}
+        <li>{{ account.icon }} {{ account.name }} - Rs {{ account.balance }}</li>
+    {% empty %}
+        <li>🏦 Bank - Rs 0.00</li>
+        <li>💳 Card - Rs 0.00</li>
+        <li>💰 Cash - Rs 0.00</li>
+        <li>🐖 Saving - Rs 0.00</li>
+    {% endfor %}
+</ul>
 
             <!-- Add Account Button -->
             <div class="accounts-add-row">
@@ -169,6 +173,7 @@
     </div> <!-- End Right Column -->
 
 </div> <!-- End Page Container -->
+{% block extra_js %}{% endblock %}
 
 </body>
 </html>

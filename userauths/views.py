@@ -60,7 +60,7 @@ def login_view(request):
 def logout_view(request):
     auth_logout(request)  
     messages.success(request, "You have been logged out.")
-    return redirect('userauths:login')
+    return redirect('finance:home')
 
 # -------------------------------
 # Profile / Edit user info
@@ -115,3 +115,22 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
 
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'userauths/password_reset_complete.html'
+
+
+@login_required
+def change_password_view(request):
+    user = request.user
+
+    if request.method == 'POST':
+        form = PasswordChangeForm(user, request.POST)
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, user)  # Keep user logged in
+            messages.success(request, 'Password updated successfully!')
+            return redirect('userauths:profile')
+        else:
+            messages.error(request, 'Please fix the errors below.')
+    else:
+        form = PasswordChangeForm(user)
+
+    return render(request, 'userauths/change_password.html', {'form': form})

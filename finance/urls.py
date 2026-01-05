@@ -1,3 +1,4 @@
+# finance/urls.py
 from django.urls import path
 from . import views
 
@@ -7,6 +8,13 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('chart/', views.chart, name='chart'),
     path('accounts/', views.accounts, name='accounts'),
+    path('accounts/edit/<int:account_id>/', views.edit_account, name='edit_account'),
+    path('accounts/delete/<int:account_id>/', views.delete_account, name='delete_account'),
     path('category/', views.category, name='category'),
+    path('category/add/', views.add_category, name='add-category'),
+    path('category/edit/<int:category_id>/', views.edit_category, name='edit-category'),
+    path('category/delete/<int:category_id>/', views.delete_category, name='delete-category'),
     path('settings/', views.settings, name='settings'),
+    path('transaction-modal/', views.add_transaction, name='transaction_modal'),
+    path('transaction/add/', views.add_transaction, name='add-transaction'),
 ]

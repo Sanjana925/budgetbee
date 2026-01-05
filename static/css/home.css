@@ -1,0 +1,148 @@
+/* ===============================
+   HOME PAGE MAIN CONTAINER
+   =============================== */
+
+/* This wraps the entire home page content */
+.home-container {
+    height: 100%;                 /* Fill available center column height */
+    width: 100%;                  /* Take full width of center column */
+    display: flex;                /* Enable flexible layout */
+    flex-direction: column;       /* Stack children vertically */
+    position: relative;           /* Needed for floating + button positioning */
+       padding-top: 20px; /* <-- ADD this line for top spacing */
+}
+
+/* ===============================
+   TOP SUMMARY SECTION
+   =============================== */
+
+/* Container for income, expense & balance */
+.summary-section {
+    display: flex;                /* Place left & right side horizontally */
+    justify-content: space-between; /* Push items to opposite ends */
+    align-items: center;          /* Vertically align items */
+    padding: 10px 20px;           /* Space inside the box */
+}
+
+/* LEFT SIDE: Income & Expense */
+.summary-left {
+    display: flex;                /* Vertical stacking */
+    flex-direction: column;
+    gap: 6px;                     /* Space between income & expense */
+}
+
+/* Text style for income & expense */
+.summary-text {
+    font-size: 14px;              /* Small text like in image */
+    color: var(--color-subtitle); /* Soft gray color */
+    margin: 0;
+}
+
+/* Highlight amount numbers */
+.summary-text .amount {
+    font-weight: 600;             /* Slightly bold */
+    color: var(--color-text);     /* Darker for readability */
+}
+
+/* RIGHT SIDE: Balance */
+.summary-right {
+    text-align: right;            /* Align text to the right */
+}
+
+/* Small label above balance */
+.balance-label {
+    font-size: 12px;              /* Small uppercase text */
+    color: var(--color-subtitle);
+    letter-spacing: 1px;          /* Spaced letters for modern look */
+}
+
+/* Balance amount */
+.balance-amount {
+    margin: 4px 0 0 0;
+    font-size: 22px;              /* Bigger number */
+    font-family: var(--font-header);
+    color: var(--color-heading);
+}
+
+/* ===============================
+   DIVIDER LINE
+   =============================== */
+
+/* Thin horizontal line under summary */
+.summary-divider {
+    border: none;                 /* Remove default border */
+    border-top: 1px solid #dcdcdc;/* Light gray line */
+    margin: 10px 0;               /* Space above & below */
+}
+
+/* ===============================
+   EMPTY STATE MESSAGE
+   =============================== */
+
+/* Centered empty state container */
+.empty-state {
+    flex: 1;                      /* Take remaining vertical space */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;      /* Vertically center content */
+    align-items: center;          /* Horizontally center content */
+    text-align: center;
+    gap: 8px;                     /* Space between lines */
+
+}
+
+/* Main empty message */
+.empty-title {
+    font-size: 14px;
+    color: var(--color-subtitle);
+    margin: 0;
+    font-style: italic;           /* Quoted style like image */
+}
+
+/* Sub text under main message */
+.empty-subtitle {
+    font-size: 13px;
+    color: var(--color-primary);  /* Blue accent */
+    margin: 0;
+}
+
+/* ===============================
+   FLOATING ADD BUTTON
+   =============================== */
+/* Wrapper for button + label */
+.floating-add-wrapper {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between button and label */
+}
+
+/* Circular + button */
+.floating-add-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    color: white;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+.floating-add-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Label text next to button */
+.floating-add-label {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-primary);
+    cursor: pointer;
+}

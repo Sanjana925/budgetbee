@@ -1,0 +1,42 @@
+<div id="transactionModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3>Add Transaction</h3>
+        <form method="POST" id="transactionForm">
+            {% csrf_token %}
+
+            <label>Amount</label>
+            <input type="number" step="0.01" name="amount" required>
+
+            <label>Type</label>
+            <select name="type" required>
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+            </select>
+
+            <label>Account</label>
+            <select name="account" required>
+                {% for acc in accounts %}
+                    <option value="{{ acc.id }}">{{ acc.icon }} {{ acc.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Category</label>
+            <select name="category" required>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.icon }} {{ cat.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Date</label>
+            <input type="date" name="date" value="{{ today }}" required>
+
+            <label>Note</label>
+            <input type="text" name="note" placeholder="Optional">
+
+            <div class="modal-actions">
+                <button type="button" onclick="closeModal()">Cancel</button>
+                <button type="submit">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
