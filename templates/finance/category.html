@@ -14,14 +14,14 @@
     <!-- ===== HEADER (TOGGLE + ADD) ===== -->
     <div class="category-header">
 
-        <!-- Toggle -->
+        <!-- Toggle Buttons -->
         <div class="toggle">
-            <a href="?type=expense" class="toggle-btn {% if category_type == "expense" %}active{% endif %}">Expense</a>
-            <a href="?type=income" class="toggle-btn {% if category_type == "income" %}active{% endif %}">Income</a>
+            <a href="?type=expense" class="toggle-btn {% if category_type == 'expense' %}active{% endif %}">Expense</a>
+            <a href="?type=income" class="toggle-btn {% if category_type == 'income' %}active{% endif %}">Income</a>
         </div>
 
-        <!-- Add Button -->
-        <a href="{% url 'finance:add-category' %}" class="add-btn">+</a>
+        <!-- Add Category Button -->
+        <button class="add-btn" data-bs-toggle="modal" data-bs-target="#categoryModal">+</button>
 
     </div>
 
@@ -30,13 +30,13 @@
 
         {% if categories %}
             {% for cat in categories %}
-            <div class="category-item">
+            <div class="category-item" style="--cat-color: {{ cat.color|default:'#FFC107' }};">
                 <div class="left">
                     <span class="icon">{{ cat.icon }}</span>
                     <span class="name">{{ cat.name }}</span>
                 </div>
                 <div class="right">
-                    <a href="{% url 'finance:edit-category' cat.id %}">✏️</a>
+                    <a href="{% url 'finance:edit-category' cat.id %}" data-bs-toggle="modal" data-bs-target="#categoryModal">✏️</a>
                     <a href="{% url 'finance:delete-category' cat.id %}">🗑️</a>
                 </div>
             </div>
@@ -48,5 +48,8 @@
     </div>
 
 </div>
+
+<!-- ===== CATEGORY MODAL ===== -->
+{% include 'finance/category_modal.html' %}
 
 {% endblock %}

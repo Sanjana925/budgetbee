@@ -32,7 +32,7 @@ class Category(models.Model):
     name = models.CharField(max_length=50)
     icon = models.CharField(max_length=5, default='📁')
     type = models.CharField(max_length=10, choices=CATEGORY_TYPE)
-
+    color = models.CharField(max_length=7, default="#"+''.join([format(x, '02X') for x in (255, 193, 7)]))  # Hex color
     def __str__(self):
         return f"{self.name} ({self.type})"
 

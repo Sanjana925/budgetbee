@@ -1,29 +1,27 @@
+<!-- finance/home.html -->
 {% extends 'finance/base.html' %}
 {% load static %}
 
 {% block title %}Home - Budget Bee{% endblock %}
 
 {% block extra_css %}
+<!-- Home & Transaction CSS -->
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
 <link rel="stylesheet" href="{% static 'css/transaction.css' %}">
 {% endblock %}
 
 {% block content %}
 
-<!-- ================= HOME DASHBOARD CONTAINER ================= -->
+<!-- HOME DASHBOARD -->
 <div class="home-container">
 
-    <!-- ---------- TOP SUMMARY SECTION ---------- -->
+    <!-- TOP SUMMARY -->
     <div class="summary-section">
 
         <!-- LEFT: Income & Expense -->
         <div class="summary-left">
-            <p class="summary-text">
-                Total Income: <span class="amount">Rs. {{ total_income|default:"0.00" }}</span>
-            </p>
-            <p class="summary-text">
-                Total Expense: <span class="amount">Rs. {{ total_expense|default:"0.00" }}</span>
-            </p>
+            <p>Total Income: <span class="amount">Rs. {{ total_income|default:"0.00" }}</span></p>
+            <p>Total Expense: <span class="amount">Rs. {{ total_expense|default:"0.00" }}</span></p>
         </div>
 
         <!-- RIGHT: Balance -->
@@ -34,10 +32,10 @@
 
     </div>
 
-    <!-- ---------- DIVIDER LINE ---------- -->
+    <!-- DIVIDER -->
     <hr class="summary-divider">
 
-    <!-- ---------- EMPTY STATE / MESSAGE ---------- -->
+    <!-- EMPTY STATE / MESSAGE -->
     <div class="empty-state">
         {% if request.user.is_authenticated %}
             <p class="empty-title">“You haven’t added any transactions yet.”</p>
@@ -48,7 +46,7 @@
         {% endif %}
     </div>
 
-    <!-- ---------- FLOATING ADD BUTTON ---------- -->
+    <!-- FLOATING ADD BUTTON -->
     <div class="floating-add-wrapper">
         {% if request.user.is_authenticated %}
             <a href="javascript:void(0);" id="newTransactionBtn" class="floating-add-btn">+</a>
@@ -59,10 +57,10 @@
     </div>
 
 </div>
-<!-- ================= END HOME DASHBOARD ================= -->
 
 {% endblock %}
 
 {% block extra_js %}
+<!-- Transaction JS -->
 <script src="{% static 'js/transaction.js' %}"></script>
 {% endblock %}

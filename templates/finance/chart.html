@@ -1,8 +1,50 @@
-{% extends 'finance/base.html' %}
+{% extends "finance/base.html" %}
+{% load static %}
 
-{% block title %}Chart - Budget Bee{% endblock %}
+{% block title %}Charts - Budget Bee{% endblock %}
 
 {% block content %}
-<h1>Chart Page</h1>
-<p>This section will display charts dynamically.</p>
+<div class="chart-page">
+
+    <!-- Toggle Buttons -->
+    <div class="toggle">
+        <button id="expenseBtn" class="active">Expenses</button>
+        <button id="incomeBtn">Income</button>
+    </div>
+
+    <!-- Chart Card -->
+    <div class="chart-card">
+        <canvas id="chartCanvas"></canvas>
+        <p class="empty-text" id="chartEmpty">No data available</p>
+    </div>
+
+    <!-- Monthly Statistics Table -->
+    <div class="table-card">
+        <h3>Statistics</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Expense</th>
+                    <th>Income</th>
+                    <th>Balance</th>
+                </tr>
+            </thead>
+            <tbody id="monthlyTotalsBody">
+                <!-- JS will populate rows -->
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    const incomeData = JSON.parse('{{ income_json|escapejs }}');
+    const expenseData = JSON.parse('{{ expense_json|escapejs }}');
+    const monthlyData = JSON.parse('{{ monthly_json|escapejs }}'); // must be prepared in view
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'finance/js/chart.js' %}"></script>
+<script src="{% static 'finance/js/toggle.js' %}"></script>
 {% endblock %}

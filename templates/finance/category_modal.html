@@ -1,15 +1,55 @@
 <div class="modal fade" id="categoryModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form method="post">
+      <form method="post" novalidate>
         {% csrf_token %}
         <div class="modal-header">
           <h5 class="modal-title">{{ action }} Category</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          {{ form.as_p }}
+
+          <!-- Name Field -->
+          <div class="form-group mb-3">
+            {{ form.name.label_tag }}
+            {{ form.name }}
+            {% if form.name.errors %}
+              <div class="text-danger">{{ form.name.errors }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Icon Field -->
+          <div class="form-group mb-3">
+            {{ form.icon.label_tag }}
+            {{ form.icon }}
+            {% if form.icon.errors %}
+              <div class="text-danger">{{ form.icon.errors }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Type Field -->
+          <div class="form-group mb-3">
+            {{ form.type.label_tag }}
+            {{ form.type }}
+            {% if form.type.errors %}
+              <div class="text-danger">{{ form.type.errors }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Color Field with live preview -->
+          <div class="form-group mb-3">
+            {{ form.color.label_tag }}
+            <div class="color-wrapper">
+              {{ form.color }}
+              <div class="color-preview" data-color="{{ form.color.value|default:'#FFC107' }}"></div>
+            </div>
+            {% if form.color.errors %}
+              <div class="text-danger">{{ form.color.errors }}</div>
+            {% endif %}
+          </div>
+
         </div>
+
         <div class="modal-footer">
           <button type="submit" class="btn btn-primary">{{ action }}</button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -18,3 +58,20 @@
     </div>
   </div>
 </div>
+
+<!-- JS to update live color preview -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const colorInputs = document.querySelectorAll('.color-wrapper input[type="color"]');
+  colorInputs.forEach(input => {
+    const preview = input.nextElementSibling;
+    // Set initial preview
+    preview.style.backgroundColor = input.value;
+
+    // Update on change
+    input.addEventListener('input', function() {
+      preview.style.backgroundColor = this.value;
+    });
+  });
+});
+</script>

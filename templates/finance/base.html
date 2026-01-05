@@ -1,3 +1,4 @@
+<!-- finance/base.html -->
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -7,7 +8,8 @@
 
     <!-- Global CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-{% block extra_css %}{% endblock %}
+    {% block extra_css %}{% endblock %}
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +24,7 @@
     <!-- Sidebar / Left Column -->
     <div class="left-column">
 
-        <!-- Logo Section -->
+        <!-- Logo -->
         <div class="logo">
             <img src="{% static 'images/bee.png' %}" alt="Bee Logo">
             <span>Budget Bee</span>
@@ -30,33 +32,15 @@
 
         <!-- Navigation Menu -->
         <ul class="menu">
-            <li>
-                <a href="{% url 'finance:home' %}" class="{% if active == 'home' %}active{% endif %}">
-                    <span class="icon">🏠</span> Home
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'finance:chart' %}" class="{% if active == 'chart' %}active{% endif %}">
-                    <span class="icon">⏱️</span> Chart
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'finance:accounts' %}" class="{% if active == 'accounts' %}active{% endif %}">
-                    <span class="icon">💳</span> Accounts
-                </a>
-            </li>
-            <li>
-                <a href="{% url 'finance:category' %}" class="{% if active == 'category' %}active{% endif %}">
-                    <span class="icon">📋</span> Category
-                </a>
-            </li>
+            <li><a href="{% url 'finance:home' %}" class="{% if active == 'home' %}active{% endif %}">🏠 Home</a></li>
+            <li><a href="{% url 'finance:chart' %}" class="{% if active == 'chart' %}active{% endif %}">⏱️ Chart</a></li>
+            <li><a href="{% url 'finance:accounts' %}" class="{% if active == 'accounts' %}active{% endif %}">💳 Accounts</a></li>
+            <li><a href="{% url 'finance:category' %}" class="{% if active == 'category' %}active{% endif %}">📋 Category</a></li>
         </ul>
 
-        <!-- Settings Link -->
+        <!-- Settings -->
         <div class="settings">
-            <a href="{% url 'finance:settings' %}">
-                <span class="icon">⚙️</span> Settings
-            </a>
+            <a href="{% url 'finance:settings' %}">⚙️ Settings</a>
         </div>
 
     </div>
@@ -74,105 +58,75 @@
         {% endblock %}
     </div>
 
-    <!-- Cards Section / Right Column -->
+    <!-- Right Column / Cards -->
     <div class="right-column">
 
         <!-- Top Card: User Info -->
         <div class="card top-card user-card">
             {% if request.user.is_authenticated %}
-                <!-- Logged-in user -->
                 <div class="user-header">
                     <span class="username">{{ request.user.username }}</span>
                     <a href="{% url 'userauths:profile' %}" class="edit-icon">
                         <img src="{% static 'icons/edit.svg' %}" alt="Edit">
                     </a>
                 </div>
-
-                <!-- Avatar -->
                 <div class="user-add-button">
                     <img src="{{ request.user.profile_image.url }}" alt="Avatar">
                 </div>
-
-                <!-- Email Display -->
                 <div class="user-account-text">{{ request.user.email }}</div>
 
                 <!-- Progress Bars -->
                 <div class="progress-bars">
-                    <div class="progress-row">
-                        <span class="label">Earning</span>
-                        <div class="progress">
-                            <div class="progress-fill earning-fill" style="width: 60%;"></div>
-                        </div>
+                    <div class="progress-row"><span class="label">Earning</span>
+                        <div class="progress"><div class="progress-fill earning-fill" style="width: 60%;"></div></div>
                     </div>
-                    <div class="progress-row">
-                        <span class="label">Spent</span>
-                        <div class="progress">
-                            <div class="progress-fill spent-fill" style="width: 40%;"></div>
-                        </div>
+                    <div class="progress-row"><span class="label">Spent</span>
+                        <div class="progress"><div class="progress-fill spent-fill" style="width: 40%;"></div></div>
                     </div>
                 </div>
 
             {% else %}
-                <!-- Guest User -->
-                <div class="user-header">
-                    <span class="username">Guest</span>
-                    <span class="edit-icon"></span>
-                </div>
-
-                <!-- + Icon goes to login -->
+                <div class="user-header"><span class="username">Guest</span></div>
                 <a href="{% url 'userauths:login' %}">
                     <div class="user-add-button">
                         <img src="{% static 'icons/plus.svg' %}" alt="Add">
                     </div>
                 </a>
-
                 <div class="user-account-text">Create account</div>
-
-                <!-- Progress Bars -->
                 <div class="progress-bars">
-                    <div class="progress-row">
-                        <span class="label">Earning</span>
-                        <div class="progress">
-                            <div class="progress-fill earning-fill"></div>
-                        </div>
+                    <div class="progress-row"><span class="label">Earning</span>
+                        <div class="progress"><div class="progress-fill earning-fill"></div></div>
                     </div>
-                    <div class="progress-row">
-                        <span class="label">Spent</span>
-                        <div class="progress">
-                            <div class="progress-fill spent-fill"></div>
-                        </div>
+                    <div class="progress-row"><span class="label">Spent</span>
+                        <div class="progress"><div class="progress-fill spent-fill"></div></div>
                     </div>
                 </div>
             {% endif %}
         </div>
 
-        <!-- Bottom Card: Accounts List -->
+        <!-- Bottom Card: Accounts -->
         <div class="card bottom-card accounts-card">
             <h4>Accounts</h4>
-
-            <!-- Account List -->
-             <ul class="account-list">
-    {% for account in user_accounts %}
-        <li>{{ account.icon }} {{ account.name }} - Rs {{ account.balance }}</li>
-    {% empty %}
-        <li>🏦 Bank - Rs 0.00</li>
-        <li>💳 Card - Rs 0.00</li>
-        <li>💰 Cash - Rs 0.00</li>
-        <li>🐖 Saving - Rs 0.00</li>
-    {% endfor %}
-</ul>
-
-            <!-- Add Account Button -->
+            <ul class="account-list">
+                {% for account in user_accounts %}
+                    <li>{{ account.icon }} {{ account.name }} - Rs {{ account.balance }}</li>
+                {% empty %}
+                    <li>🏦 Bank - Rs 0.00</li>
+                    <li>💳 Card - Rs 0.00</li>
+                    <li>💰 Cash - Rs 0.00</li>
+                    <li>🐖 Saving - Rs 0.00</li>
+                {% endfor %}
+            </ul>
             <div class="accounts-add-row">
                 <img src="{% static 'icons/add.svg' %}" alt="Add" class="accounts-add-img">
                 <a href="{% url 'finance:accounts' %}" class="accounts-add-text">Add account</a>
             </div>
-
         </div>
 
     </div> <!-- End Right Column -->
 
 </div> <!-- End Page Container -->
+
 {% block extra_js %}{% endblock %}
 
 </body>

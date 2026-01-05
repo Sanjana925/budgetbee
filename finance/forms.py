@@ -1,4 +1,3 @@
-# finance/forms.py
 from django import forms
 from .models import Account, Category
 
@@ -13,9 +12,15 @@ class AccountForm(forms.ModelForm):
         }
 
 class CategoryForm(forms.ModelForm):
+    color = forms.CharField(
+        widget=forms.TextInput(attrs={'type': 'color', 'class': 'form-control'}),
+        required=True,
+        label="Category Color"
+    )
+
     class Meta:
         model = Category
-        fields = ['name', 'icon', 'type']
+        fields = ['name', 'icon', 'type', 'color']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Category Name'}),
             'icon': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Emoji Icon'}),

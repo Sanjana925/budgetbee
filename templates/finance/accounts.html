@@ -1,21 +1,26 @@
+<!-- finance/accounts.html -->
 {% extends 'finance/base.html' %}
 {% load static %}
 
 {% block title %}Accounts - Budget Bee{% endblock %}
 
 {% block extra_css %}
+<!-- Accounts CSS -->
 <link rel="stylesheet" href="{% static 'css/accounts.css' %}">
 {% endblock %}
 
 {% block content %}
+
 <h1>Accounts Page</h1>
 
+<!-- Summary Cards -->
 <div class="accounts-summary">
     <div class="summary-card">All Accounts Total: Rs {{ total_balance|floatformat:2 }}</div>
     <div class="summary-card">Expenses so far: Rs {{ expenses|floatformat:2 }}</div>
     <div class="summary-card">Income so far: Rs {{ income|floatformat:2 }}</div>
 </div>
 
+<!-- Account Cards -->
 <div class="accounts-cards">
     {% for account in accounts %}
     <div class="account-card">
@@ -28,6 +33,7 @@
     {% endfor %}
 </div>
 
+<!-- Add Account Button -->
 <div class="add-account-btn">
     <button id="openAddAccount">+ Add New Account</button>
 </div>
@@ -80,7 +86,7 @@
     </div>
 </div>
 
-<!-- URLs & Auth Data -->
+<!-- Data URLs & Auth -->
 <div id="accountsData"
      data-add-url="{% url 'finance:accounts' %}"
      data-edit-url="{% url 'finance:edit_account' 0 %}"

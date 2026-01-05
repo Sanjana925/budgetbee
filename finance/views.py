@@ -7,6 +7,11 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from .forms import AccountForm, CategoryForm
 from .models import Account, Category, Transaction, Customer
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from .models import Transaction
+import json
 
 # Home dashboard
 @login_required
@@ -49,10 +54,48 @@ def add_transaction(request):
 
     return render(request, 'finance/transaction_modal.html', {'accounts':accounts,'categories':categories,'today':today})
 
-# Charts
-@login_required
+# Chartsimport json
+
+
 def chart(request):
-    return render(request, 'finance/chart.html', {'active':'chart'})
+    user = request.user
+
+    # Transactions grouped by category
+    expense_trans = Transaction.objects.filter(customer__user=user, type='expense')
+    income_trans = Transaction.objects.filter(customer__user=user, type='income')
+
+    # Sum by category
+    expense_data = expense_trans.values('category__name').annotate(total=Sum('amount'))
+    income_data = income_trans.values('category__name').annotate(total=Sum('amount'))
+
+    # Prepare dictionaries for Chart.js
+    expense_json = {item['category__name']: float(item['total']) for item in expense_data}
+    income_json = {item['category__name']: float(item['total']) for item in income_data}
+
+    # Monthly totals
+    monthly_data = []
+    months = Transaction.objects.filter(customer__user=user).dates('date', 'month')
+    for m in months:
+        month_exp = expense_trans.filter(date__year=m.year, date__month=m.month).aggregate(Sum('amount'))['amount__sum'] or 0
+        month_inc = income_trans.filter(date__year=m.year, date__month=m.month).aggregate(Sum('amount'))['amount__sum'] or 0
+        monthly_data.append({
+            'date': m.strftime("%b %Y"),
+            'expense': float(month_exp),
+            'income': float(month_inc),
+        })
+
+    # Category colors
+    categories = Category.objects.filter(user=user)
+    category_colors = {cat.name: cat.color for cat in categories}
+
+    context = {
+        'expense_json': json.dumps(expense_json),
+        'income_json': json.dumps(income_json),
+        'monthly_json': json.dumps(monthly_data),
+        'category_colors_json': json.dumps(category_colors),
+    }
+    return render(request, 'finance/chart.html', context)
+
 
 # Category list
 @login_required

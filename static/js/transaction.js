@@ -1,15 +1,15 @@
+// finance/transaction.js
+// Transaction modal JS
 document.addEventListener("DOMContentLoaded", function() {
     const btn = document.getElementById("newTransactionBtn");
-
-    btn.onclick = function() {
-        openModal();
-    };
+    if (!btn) return;
+    btn.onclick = openModal;
 });
 
 function openModal() {
     if (document.getElementById("transactionModal")) return;
 
-    fetch("/transaction-modal/")
+    fetch("/transaction-modal/") // Fetch modal HTML
         .then(res => res.text())
         .then(html => {
             document.body.insertAdjacentHTML("beforeend", html);
