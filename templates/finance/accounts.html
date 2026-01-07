@@ -1,11 +1,9 @@
-<!-- finance/accounts.html -->
 {% extends 'finance/base.html' %}
 {% load static %}
 
 {% block title %}Accounts - Budget Bee{% endblock %}
 
 {% block extra_css %}
-<!-- Accounts CSS -->
 <link rel="stylesheet" href="{% static 'css/accounts.css' %}">
 {% endblock %}
 
@@ -22,23 +20,40 @@
 
 <!-- Account Cards -->
 <div class="accounts-cards">
-    {% for account in accounts %}
-    <div class="account-card">
-        <span>{{ account.icon }} {{ account.name }}</span>
-        <div class="account-actions">
-            <button class="edit-btn" data-id="{{ account.id }}" data-name="{{ account.name }}" data-balance="{{ account.balance }}" data-icon="{{ account.icon }}">Edit</button>
-            <button class="delete-btn" data-id="{{ account.id }}" data-name="{{ account.name }}">Delete</button>
+    {% if accounts %}
+        {% for account in accounts %}
+        <div class="account-card">
+            <span>{{ account.icon }} {{ account.name }}</span>
+            {% if request.user.is_authenticated %}
+            <div class="account-actions">
+                <button class="edit-btn" data-id="{{ account.id }}" data-name="{{ account.name }}" data-balance="{{ account.balance }}" data-icon="{{ account.icon }}">Edit</button>
+                <button class="delete-btn" data-id="{{ account.id }}" data-name="{{ account.name }}">Delete</button>
+            </div>
+            {% endif %}
         </div>
-    </div>
-    {% endfor %}
+        {% endfor %}
+    {% else %}
+        <!-- Default accounts for guests -->
+        <div class="account-card">🏦 Bank - Rs 0.00</div>
+        <div class="account-card">💳 Card - Rs 0.00</div>
+        <div class="account-card">💰 Cash - Rs 0.00</div>
+        <div class="account-card">🐖 Saving - Rs 0.00</div>
+    {% endif %}
 </div>
 
 <!-- Add Account Button -->
+{% if request.user.is_authenticated %}
 <div class="add-account-btn">
     <button id="openAddAccount">+ Add New Account</button>
 </div>
+{% else %}
+<div class="add-account-btn">
+    <button class="guest-add" data-type="account">+ Add New Account</button>
+</div>
+{% endif %}
 
-<!-- Add/Edit Popup -->
+<!-- Add/Edit Popup (for logged-in users) -->
+{% if request.user.is_authenticated %}
 <div class="popup-overlay" id="popupOverlay">
     <div class="popup-card">
         <h3 id="popupTitle">Add New Account</h3>
@@ -73,8 +88,9 @@
         </form>
     </div>
 </div>
+{% endif %}
 
-<!-- Login Required Popup -->
+<!-- Login Required Popup (for guests) -->
 <div class="popup-overlay" id="loginOverlay">
     <div class="popup-card">
         <h3>Login Required</h3>
@@ -97,4 +113,5 @@
 
 {% block extra_js %}
 <script src="{% static 'js/accounts.js' %}"></script>
+<script src="{% static 'js/global.js' %}"></script>
 {% endblock %}

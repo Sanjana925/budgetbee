@@ -1,39 +1,42 @@
-# finance/signals.py
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from userauths.models import User
+from django.contrib.auth import get_user_model
 from .models import Category, Account
+from .constants import DEFAULT_CATEGORIES, DEFAULT_ACCOUNTS
 
-# Default categories per new user
-DEFAULT_CATEGORIES = {
-    "income": [
-        ("Salary", "💼", "#4CAF50"),
-        ("Business", "🏢", "#2196F3"),
-        ("Gift", "🎁", "#FF9800"),
-        ("Investment", "📈", "#9C27B0"),
-        ("Other Income", "💵", "#00BCD4")
-    ],
-    "expense": [
-        ("Food", "🍔", "#FF5722"),
-        ("Transport", "🚌", "#795548"),
-        ("Shopping", "🛍️", "#E91E63"),
-        ("Bills", "💡", "#FFC107"),
-        ("Entertainment", "🎬", "#3F51B5")
-    ]
-}
+User = get_user_model()
+
+
+def create_default_categories(user):
+    for c_type, items in DEFAULT_CATEGORIES.items():
+        for name, icon, color in items:
+            Category.objects.get_or_create(
+                user=user, name=name, type=c_type, defaults={'icon': icon, 'color': color}
+            )
+
+
+def create_default_accounts(user):
+    for name, icon, amount in DEFAULT_ACCOUNTS:
+        Account.objects.get_or_create(
+            user=user, name=name, defaults={'icon': icon, 'initial_amount': amount, 'balance': amount}
+        )
+
+
+def get_or_create_guest_user():
+    guest, created = User.objects.get_or_create(
+        username="Guest",
+        defaults={"email": "guest@example.com", "is_active": False}
+    )
+    if created:
+        guest.set_unusable_password()
+        guest.save()
+        create_default_categories(guest)
+        create_default_accounts(guest)
+    return guest
+
 
 @receiver(post_save, sender=User)
-def create_default_categories(sender, instance, created, **kwargs):
+def create_defaults_for_new_user(sender, instance, created, **kwargs):
     if created:
-        for c_type, items in DEFAULT_CATEGORIES.items():
-            for name, icon, color in items:
-                Category.objects.create(user=instance, name=name, type=c_type, icon=icon, color=color)
-
-# Default accounts per new user
-DEFAULT_ACCOUNTS = [("Bank","🏦",0.0),("Card","💳",0.0),("Cash","💰",0.0),("Saving","🐖",0.0)]
-
-@receiver(post_save, sender=User)
-def create_default_accounts(sender, instance, created, **kwargs):
-    if created:
-        for name, icon, balance in DEFAULT_ACCOUNTS:
-            Account.objects.create(user=instance, name=name, icon=icon, balance=balance)
+        create_default_categories(instance)
+        create_default_accounts(instance)

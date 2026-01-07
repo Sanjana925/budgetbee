@@ -1,4 +1,3 @@
-<!-- finance/base.html -->
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +16,7 @@
 
     {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body data-auth="{{ request.user.is_authenticated|yesno:'true,false' }}">
 
 <div class="page-container">
 
@@ -57,77 +56,100 @@
         {% endif %}
         {% endblock %}
     </div>
+ <!-- Right Column / Cards -->
+<div class="right-column">
 
-    <!-- Right Column / Cards -->
-    <div class="right-column">
-
-        <!-- Top Card: User Info -->
-        <div class="card top-card user-card">
-            {% if request.user.is_authenticated %}
-                <div class="user-header">
-                    <span class="username">{{ request.user.username }}</span>
-                    <a href="{% url 'userauths:profile' %}" class="edit-icon">
-                        <img src="{% static 'icons/edit.svg' %}" alt="Edit">
-                    </a>
-                </div>
-                <div class="user-add-button">
-                    <img src="{{ request.user.profile_image.url }}" alt="Avatar">
-                </div>
-                <div class="user-account-text">{{ request.user.email }}</div>
-
-                <!-- Progress Bars -->
-                <div class="progress-bars">
-                    <div class="progress-row"><span class="label">Earning</span>
-                        <div class="progress"><div class="progress-fill earning-fill" style="width: 60%;"></div></div>
-                    </div>
-                    <div class="progress-row"><span class="label">Spent</span>
-                        <div class="progress"><div class="progress-fill spent-fill" style="width: 40%;"></div></div>
-                    </div>
-                </div>
-
-            {% else %}
-                <div class="user-header"><span class="username">Guest</span></div>
-                <a href="{% url 'userauths:login' %}">
-                    <div class="user-add-button">
-                        <img src="{% static 'icons/plus.svg' %}" alt="Add">
-                    </div>
+    <!-- Top Card: User Info -->
+    <div class="card top-card user-card">
+        {% if request.user.is_authenticated %}
+            <div class="user-header">
+                <span class="username">{{ request.user.username }}</span>
+                <a href="{% url 'userauths:profile' %}" class="edit-icon">
+                    <img src="{% static 'icons/edit.svg' %}" alt="Edit">
                 </a>
-                <div class="user-account-text">Create account</div>
-                <div class="progress-bars">
-                    <div class="progress-row"><span class="label">Earning</span>
-                        <div class="progress"><div class="progress-fill earning-fill"></div></div>
-                    </div>
-                    <div class="progress-row"><span class="label">Spent</span>
-                        <div class="progress"><div class="progress-fill spent-fill"></div></div>
-                    </div>
+            </div>
+            <div class="user-add-button" data-requires-auth>
+                <img src="{{ request.user.profile_image.url }}" alt="Avatar">
+            </div>
+            <div class="user-account-text">{{ request.user.email }}</div>
+        {% else %}
+            <div class="user-header"><span class="username">Guest</span></div>
+            <!-- Redirect to login directly for top user card -->
+            <a href="{% url 'userauths:login' %}">
+                <div class="user-add-button">
+                    <img src="{% static 'icons/plus.svg' %}" alt="Add">
                 </div>
-            {% endif %}
-        </div>
+            </a>
+            <div class="user-account-text">Create account</div>
+        {% endif %}
 
-        <!-- Bottom Card: Accounts -->
-        <div class="card bottom-card accounts-card">
-            <h4>Accounts</h4>
-            <ul class="account-list">
-                {% for account in user_accounts %}
-                    <li>{{ account.icon }} {{ account.name }} - Rs {{ account.balance }}</li>
-                {% empty %}
-                    <li>🏦 Bank - Rs 0.00</li>
-                    <li>💳 Card - Rs 0.00</li>
-                    <li>💰 Cash - Rs 0.00</li>
-                    <li>🐖 Saving - Rs 0.00</li>
-                {% endfor %}
-            </ul>
-            <div class="accounts-add-row">
-                <img src="{% static 'icons/add.svg' %}" alt="Add" class="accounts-add-img">
-                <a href="{% url 'finance:accounts' %}" class="accounts-add-text">Add account</a>
+        <!-- Progress Bars -->
+        <div class="progress-bars">
+            <div class="progress-row"><span class="label">Earning</span>
+                <div class="progress">
+                    <div class="progress-fill earning-fill" style="--width: {{ earning_percent }}%;"></div>
+                </div>
+            </div>
+            <div class="progress-row"><span class="label">Spent</span>
+                <div class="progress">
+                    <div class="progress-fill spent-fill" style="--width: {{ spent_percent }}%;"></div>
+                </div>
             </div>
         </div>
+    </div>
+<!-- Bottom Card: Accounts -->
+<div class="card bottom-card accounts-card">
+    <h4>Accounts</h4>
 
-    </div> <!-- End Right Column -->
+    <!-- Scrollable list container -->
+    <div class="account-list-container">
+        <ul class="account-list">
+            {% for account in user_accounts %}
+                <li>{{ account.icon }} {{ account.name }} - Rs {{ account.balance }}</li>
+            {% empty %}
+                <li>No accounts found</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Add button stays at bottom -->
+    <div class="accounts-add-row">
+        {% if request.user.is_authenticated %}
+            <img src="{% static 'icons/add.svg' %}" alt="Add" class="accounts-add-img">
+            <a href="{% url 'finance:accounts' %}" class="accounts-add-text">Add account</a>
+        {% else %}
+            <img src="{% static 'icons/add.svg' %}" alt="Add" class="accounts-add-img" data-requires-auth>
+            <a href="#" class="accounts-add-text" data-requires-auth>Add account</a>
+        {% endif %}
+    </div>
+</div>
+
+
+</div> <!-- End Right Column -->
+
 
 </div> <!-- End Page Container -->
 
+
+<!-- Global Login Required Popup -->
+<div class="popup-overlay hidden" id="loginRequiredModal">
+    <div class="popup-card">
+        <h3>Login Required</h3>
+        <p>You must be logged in to perform this action.</p>
+
+        <div class="popup-actions">
+            <button type="button" id="closeLoginModal">Cancel</button>
+            <a href="{% url 'userauths:login' %}">
+                <button type="button">Go to Login</button>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Global JS -->
+<script src="{% static 'js/global.js' %}"></script>
 {% block extra_js %}{% endblock %}
 
 </body>
 </html>
+ 

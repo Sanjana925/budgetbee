@@ -4,195 +4,243 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.auth.decorators import login_required
 from .forms import AccountForm, CategoryForm
-from .models import Account, Category, Transaction, Customer
+from .models import Account, Category, Transaction
+from .utils import get_user_or_guest, calculate_totals, prepare_chart_data
 
-# Home dashboard
-@login_required
+
+# ---------------------------
+# HOME DASHBOARD
+# ---------------------------
 def home(request):
-    accounts = Account.objects.filter(user=request.user)
-    transactions = Transaction.objects.filter(account__user=request.user).select_related('account', 'category')
-    total_income = sum(t.amount for t in transactions if t.type=="income")
-    total_expense = sum(t.amount for t in transactions if t.type=="expense")
-    balance = sum(a.balance for a in accounts)
+    """
+    Home dashboard: shows accounts, balance, income/expense.
+    Guests see empty/default accounts.
+    """
+    user = get_user_or_guest(request.user)
+    total_income, total_expense, balance = calculate_totals(user)
+
+    accounts = Account.objects.filter(user=user) if user else []
+
     return render(request, 'finance/home.html', {
-        "active":"home", "accounts":accounts,
-        "total_income":total_income, "total_expense":total_expense,
-        "balance":balance
+        "active": "home",
+        "accounts": accounts,
+        "total_income": total_income,
+        "total_expense": total_expense,
+        "balance": balance,
+        "is_authenticated": bool(user),
     })
 
-# Add transaction via modal
-@login_required
+
+# ---------------------------
+# ADD TRANSACTION (Modal)
+# ---------------------------
 def add_transaction(request):
-    accounts = Account.objects.filter(user=request.user)
-    categories = Category.objects.filter(user=request.user)
+    """
+    Add transaction via modal.
+    Guests are blocked and receive JSON error.
+    """
+    user = get_user_or_guest(request.user)
+    if not user:
+        return JsonResponse({"error": "login_required"}, status=403)
+
+    accounts = Account.objects.filter(user=user)
+    categories = Category.objects.filter(user=user)
     today = timezone.now().date()
 
-    if request.method=="POST":
+    if request.method == "POST":
         try:
-            account = Account.objects.get(id=request.POST.get("account"), user=request.user)
-            category = Category.objects.get(id=request.POST.get("category"), user=request.user)
+            account = Account.objects.get(id=request.POST.get("account"), user=user)
+            category = Category.objects.get(id=request.POST.get("category"), user=user)
             amount = float(request.POST.get("amount"))
             t_type = request.POST.get("type")
             note = request.POST.get("note")
             date = request.POST.get("date")
-            if amount<=0:
-                return JsonResponse({"error":"Amount must be greater than 0"}, status=400)
-            Transaction.objects.create(account=account, category=category, amount=amount, type=t_type, note=note, date=date)
-            total_income = sum(t.amount for t in Transaction.objects.filter(account__user=request.user) if t.type=="income")
-            total_expense = sum(t.amount for t in Transaction.objects.filter(account__user=request.user) if t.type=="expense")
-            balance = sum(a.balance for a in Account.objects.filter(user=request.user))
-            return JsonResponse({"success":True, "total_income":total_income, "total_expense":total_expense, "balance":balance})
+
+            if amount <= 0:
+                return JsonResponse({"error": "Amount must be greater than 0"}, status=400)
+
+            Transaction.objects.create(
+                account=account, category=category, amount=amount, type=t_type, note=note, date=date
+            )
+
+            # Recalculate totals
+            total_income, total_expense, balance = calculate_totals(user)
+
+            return JsonResponse({
+                "success": True,
+                "total_income": total_income,
+                "total_expense": total_expense,
+                "balance": balance
+            })
+
         except Exception as e:
-            return JsonResponse({"error":str(e)}, status=400)
+            return JsonResponse({"error": str(e)}, status=400)
 
-    return render(request, 'finance/transaction_modal.html', {'accounts':accounts,'categories':categories,'today':today})
+    return render(request, 'finance/transaction_modal.html', {
+        'accounts': accounts,
+        'categories': categories,
+        'today': today
+    })
 
-# Chart view
-# finance/views.py
-import json
-from django.db.models import Sum
-from django.utils import timezone
 
-@login_required
+# ---------------------------
+# CHART VIEW
+# ---------------------------
 def chart(request):
-    # Get all transactions for the user
-    transactions = Transaction.objects.filter(account__user=request.user).select_related('category')
-
-    # Prepare income and expense category totals
-    income_data = {}
-    expense_data = {}
-    category_colors = {}
-
-    categories = Category.objects.filter(user=request.user)
-    for cat in categories:
-        category_colors[cat.name] = cat.color if hasattr(cat, 'color') else '#ddd'  # default color
-
-    for t in transactions:
-        target_dict = income_data if t.type == "income" else expense_data
-        if t.category.name in target_dict:
-            target_dict[t.category.name] += t.amount
-        else:
-            target_dict[t.category.name] = t.amount
-
-    # Prepare monthly totals
-    monthly_data = []
-    # Group transactions by month
-    from django.db.models.functions import TruncMonth
-    monthly_qs = transactions.annotate(month=TruncMonth('date')).values('month').order_by('month')
-    months = sorted(set(item['month'] for item in monthly_qs))
-
-    for m in months:
-        month_income = transactions.filter(date__year=m.year, date__month=m.month, type='income').aggregate(total=Sum('amount'))['total'] or 0
-        month_expense = transactions.filter(date__year=m.year, date__month=m.month, type='expense').aggregate(total=Sum('amount'))['total'] or 0
-        monthly_data.append({
-            "date": m.strftime("%b %Y"),
-            "income": float(month_income),
-            "expense": float(month_expense)
-        })
-
-    # Ensure JSON serializable
-    income_json = json.dumps({k: float(v) for k, v in income_data.items()})
-    expense_json = json.dumps({k: float(v) for k, v in expense_data.items()})
-    monthly_json = json.dumps(monthly_data)
-    category_colors_json = json.dumps(category_colors)
+    """
+    Chart view: income/expense per category & monthly totals.
+    Guests see empty charts.
+    """
+    user = get_user_or_guest(request.user)
+    chart_data = prepare_chart_data(user)
 
     return render(request, 'finance/chart.html', {
         'active': 'chart',
-        'income_json': income_json,
-        'expense_json': expense_json,
-        'monthly_json': monthly_json,
-        'category_colors_json': category_colors_json,
+        'income_json': chart_data['income_json'],
+        'expense_json': chart_data['expense_json'],
+        'monthly_json': chart_data['monthly_json'],
+        'category_colors_json': chart_data['category_colors_json'],
+        'is_authenticated': bool(user),
     })
 
-# Category list
-@login_required
-def category(request):
-    ctype = request.GET.get('type','expense')
-    categories = Category.objects.filter(user=request.user,type=ctype)
-    return render(request, 'finance/category.html', {'categories':categories,'category_type':ctype})
 
-@login_required
+# ---------------------------
+# CATEGORY VIEWS
+# ---------------------------
+def category(request):
+    """
+    List categories.
+    Guests see empty/default categories.
+    """
+    ctype = request.GET.get('type', 'expense')
+    user = get_user_or_guest(request.user)
+
+    if user:
+        categories = Category.objects.filter(user=user, type=ctype)
+    else:
+        categories = []  # could provide default categories
+
+    return render(request, 'finance/category.html', {
+        'categories': categories,
+        'category_type': ctype,
+        'is_authenticated': bool(user),
+    })
+
+
 def add_category(request):
-    if request.method=="POST":
+    user = get_user_or_guest(request.user)
+    if not user:
+        messages.warning(request, "You must be logged in to add a category.")
+        return redirect('userauths:login')
+
+    if request.method == "POST":
         form = CategoryForm(request.POST)
         if form.is_valid():
             cat = form.save(commit=False)
-            cat.user = request.user
+            cat.user = user
             cat.save()
-            messages.success(request,"Category added.")
+            messages.success(request, "Category added.")
             return redirect(f"{reverse('finance:category')}?type={cat.type}")
     else:
         form = CategoryForm()
-    return render(request, 'finance/category_modal.html', {'form':form,'action':'Add'})
 
-@login_required
+    return render(request, 'finance/category_modal.html', {'form': form, 'action': 'Add'})
+
+
 def edit_category(request, category_id):
-    category = get_object_or_404(Category,id=category_id,user=request.user)
-    if request.method=="POST":
-        form = CategoryForm(request.POST,instance=category)
+    user = get_user_or_guest(request.user)
+    if not user:
+        messages.warning(request, "You must be logged in to edit a category.")
+        return redirect('userauths:login')
+
+    category = get_object_or_404(Category, id=category_id, user=user)
+
+    if request.method == "POST":
+        form = CategoryForm(request.POST, instance=category)
         if form.is_valid():
             form.save()
-            messages.success(request,"Category updated.")
+            messages.success(request, "Category updated.")
             return redirect(f"{reverse('finance:category')}?type={form.cleaned_data['type']}")
     else:
         form = CategoryForm(instance=category)
-    return render(request,'finance/category_modal.html',{'form':form,'action':'Edit'})
 
-@login_required
+    return render(request,'finance/category_modal.html',{'form': form, 'action': 'Edit'})
+
+
 def delete_category(request, category_id):
-    category = get_object_or_404(Category,id=category_id,user=request.user)
-    if request.method=="POST":
+    user = get_user_or_guest(request.user)
+    if not user:
+        messages.warning(request, "You must be logged in to delete a category.")
+        return redirect('userauths:login')
+
+    category = get_object_or_404(Category, id=category_id, user=user)
+    if request.method == "POST":
         ctype = category.type
         category.delete()
-        messages.success(request,"Category deleted.")
+        messages.success(request, "Category deleted.")
         return redirect(f"{reverse('finance:category')}?type={ctype}")
-    return render(request,'finance/delete_category_modal.html',{'category':category})
+    return render(request, 'finance/delete_category_modal.html', {'category': category})
 
-# Accounts CRUD
-@login_required
+
+# ---------------------------
+# ACCOUNTS CRUD
+# ---------------------------
 def accounts(request):
-    acc_list = Account.objects.filter(user=request.user)
-    total_balance = sum(a.balance for a in acc_list)
-    if request.method=="POST":
-        form = AccountForm(request.POST)
-        if form.is_valid():
-            account = form.save(commit=False)
-            account.user = request.user
-            account.save()
-            messages.success(request,"Account added successfully.")
-            return redirect('finance:accounts')
-    return render(request,'finance/accounts.html',{"active":"accounts","accounts":acc_list,"total_balance":total_balance})
+    user = get_user_or_guest(request.user)
+    accounts = Account.objects.filter(user=user) if user else []
+    total_balance = sum(a.balance for a in accounts) if user else 0
 
-@login_required
+    return render(request, 'finance/accounts.html', {
+        "active": "accounts",
+        "accounts": accounts,
+        "total_balance": total_balance,
+        "is_authenticated": bool(user),
+    })
+
+
 def edit_account(request, account_id):
-    account = get_object_or_404(Account,pk=account_id,user=request.user)
-    if request.method=="POST":
-        form = AccountForm(request.POST,instance=account)
+    user = get_user_or_guest(request.user)
+    if not user:
+        messages.warning(request, "You must be logged in to edit an account.")
+        return redirect('userauths:login')
+
+    account = get_object_or_404(Account, pk=account_id, user=user)
+    if request.method == "POST":
+        form = AccountForm(request.POST, instance=account)
         if form.is_valid():
             form.save()
-            messages.success(request,"Account updated.")
+            messages.success(request, "Account updated.")
             return redirect('finance:accounts')
     else:
         form = AccountForm(instance=account)
-    return render(request,'finance/edit_account.html',{"form":form,"account":account})
 
-@login_required
+    return render(request,'finance/edit_account.html', {"form": form, "account": account})
+
+
 def delete_account(request, account_id):
-    account = get_object_or_404(Account,pk=account_id,user=request.user)
-    if request.method=="POST":
+    user = get_user_or_guest(request.user)
+    if not user:
+        messages.warning(request, "You must be logged in to delete an account.")
+        return redirect('userauths:login')
+
+    account = get_object_or_404(Account, pk=account_id, user=user)
+    if request.method == "POST":
         account.delete()
-        messages.success(request,"Account deleted.")
+        messages.success(request, "Account deleted.")
         return redirect('finance:accounts')
-    return render(request,'finance/delete_account.html',{"account":account})
 
-# Settings page
-@login_required
+    return render(request,'finance/delete_account.html', {"account": account})
+
+
+# ---------------------------
+# SETTINGS PAGE
+# ---------------------------
 def settings(request):
-    return render(request,'finance/settings.html',{'active':'settings'})
+    user = get_user_or_guest(request.user)
+    if not user:
+        messages.warning(request, "You must be logged in to access settings.")
+        return redirect('userauths:login')
 
-# Common context for templates
-def common_context(request):
-    accounts = Account.objects.filter(user=request.user) if request.user.is_authenticated else []
-    return {'user_accounts':accounts}
+    return render(request, 'finance/settings.html', {'active':'settings'})
+

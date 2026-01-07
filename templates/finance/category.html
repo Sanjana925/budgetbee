@@ -1,16 +1,13 @@
-<!-- finance/category.html -->
 {% extends 'finance/base.html' %}
 {% load static %}
 
 {% block title %}Category - Budget Bee{% endblock %}
 
 {% block extra_css %}
-<!-- Category CSS -->
 <link rel="stylesheet" href="{% static 'css/category.css' %}">
 {% endblock %}
 
 {% block content %}
-
 <div class="category-container">
 
     <!-- HEADER: Toggle + Add -->
@@ -18,12 +15,16 @@
 
         <!-- Toggle Buttons -->
         <div class="toggle">
-            <a href="?type=expense" class="toggle-btn {% if category_type == "expense" %}active{% endif %}">Expense</a>
-            <a href="?type=income" class="toggle-btn {% if category_type == "income" %}active{% endif %}">Income</a>
+            <a href="?type=expense" class="toggle-btn {% if category_type == 'expense' %}active{% endif %}">Expense</a>
+            <a href="?type=income" class="toggle-btn {% if category_type == 'income' %}active{% endif %}">Income</a>
         </div>
 
         <!-- Add Category Button -->
-        <a href="{% url 'finance:add-category' %}" class="add-btn">+</a>
+        {% if request.user.is_authenticated %}
+            <a href="{% url 'finance:add-category' %}" class="add-btn">+</a>
+        {% else %}
+            <button class="add-btn guest-add" data-type="category">+</button>
+        {% endif %}
 
     </div>
 
@@ -31,22 +32,30 @@
     <div class="category-list">
         {% if categories %}
             {% for cat in categories %}
-            <div class="category-item">
+            <div class="category-item" style="--cat-color: {{ cat.color }}">
                 <div class="left">
                     <span class="icon">{{ cat.icon }}</span>
                     <span class="name">{{ cat.name }}</span>
                 </div>
                 <div class="right">
-                    <a href="{% url 'finance:edit-category' cat.id %}">✏️</a>
-                    <a href="{% url 'finance:delete-category' cat.id %}">🗑️</a>
+                    {% if request.user.is_authenticated %}
+                        <a href="{% url 'finance:edit-category' cat.id %}">✏️</a>
+                        <a href="{% url 'finance:delete-category' cat.id %}">🗑️</a>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
         {% else %}
-            <p class="empty-text">No categories yet</p>
+            <!-- Default categories for guest -->
+            <div class="category-item" style="--cat-color:#FF6384">
+                <div class="left"><span class="icon">🍔</span> <span class="name">Food</span></div>
+            </div>
+            <div class="category-item" style="--cat-color:#36A2EB">
+                <div class="left"><span class="icon">💵</span> <span class="name">Salary</span></div>
+            </div>
+            <p class="empty-text">No more categories</p>
         {% endif %}
     </div>
 
 </div>
-
 {% endblock %}
