@@ -19,7 +19,7 @@
 
         {% if request.user.is_authenticated %}
             <!-- Logged-in: show popup -->
-            <button id="openAddCategory" class="add-btn">+</button>
+            <button id="openAddCategory" class="add-btn" data-current-type="{{ category_type }}">+</button>
         {% else %}
             <!-- Guest: trigger global login popup -->
             <button class="add-btn" data-requires-auth>+</button>
@@ -40,7 +40,8 @@
                             data-id="{{ cat.id }}"
                             data-name="{{ cat.name }}"
                             data-icon="{{ cat.icon }}"
-                            data-color="{{ cat.color }}">✏️</button>
+                            data-color="{{ cat.color }}"
+                            data-type="{{ category_type }}">✏️</button>
                     <button class="delete-btn"
                             data-id="{{ cat.id }}"
                             data-name="{{ cat.name }}">🗑️</button>
@@ -60,6 +61,8 @@
         <h3 id="popupTitle">Add Category</h3>
         <form id="categoryForm">
             {% csrf_token %}
+            <input type="hidden" name="type" id="id_type" value="{{ category_type }}">
+            
             <label for="id_name">Category Name:</label>
             <input type="text" id="id_name" name="name" value="Untitled">
 
@@ -76,9 +79,9 @@
             <label>Pick a Color:</label>
             <div class="color-picker">
                 {% for color in default_category_colors %}
-                <label class="color-box">
-                    <input type="radio" name="color" value="{{ color }}">
-                    <span class="{{ color_class }}"></span>
+                <label class="color-box" style="--bg-color: {{ color }}">
+                    <input type="radio" name="color" value="{{ color }}" {% if forloop.first %}checked{% endif %}>
+                    <span></span>
                 </label>
                 {% endfor %}
             </div>
@@ -105,6 +108,18 @@
         </form>
     </div>
 </div>
+{% endif %}
+
+{% if request.user.is_authenticated %}
+<div id="categoriesData"
+     data-is-authenticated="true"
+     data-add-url="{% url 'finance:add_category' %}"
+     data-edit-url="{% url 'finance:edit_category' 0 %}"
+     data-delete-url="{% url 'finance:delete_category' 0 %}"
+     data-current-type="{{ category_type }}">
+</div>
+{% else %}
+<div id="categoriesData" data-is-authenticated="false"></div>
 {% endif %}
 
 {% endblock %}

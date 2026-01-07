@@ -124,7 +124,7 @@
 .icon-box {
     display: flex;
     justify-content: center;
-    align-items: center;
+   
     background: #f2f2f2;
     border: 2px solid transparent;
     border-radius: 8px;
