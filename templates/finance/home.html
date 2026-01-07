@@ -47,14 +47,15 @@
     </div>
 
     <!-- FLOATING ADD BUTTON -->
-    <div class="floating-add-wrapper">
-        {% if request.user.is_authenticated %}
-            <a href="javascript:void(0);" id="newTransactionBtn" class="floating-add-btn">+</a>
-        {% else %}
-            <a href="{% url 'userauths:login' %}" class="floating-add-btn">+</a>
-        {% endif %}
-        <span class="floating-add-label">New</span>
-    </div>
+  <div class="floating-add-wrapper">
+    {% if request.user.is_authenticated %}
+        <a href="javascript:void(0);" id="newTransactionBtn" class="floating-add-btn">+</a>
+    {% else %}
+        <a href="#" class="floating-add-btn" data-requires-auth>+</a>
+    {% endif %}
+    <span class="floating-add-label">New</span>
+</div>
+
 
 </div>
 

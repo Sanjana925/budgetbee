@@ -11,61 +11,89 @@
 
 <h1>Accounts Page</h1>
 
-<!-- Summary Cards -->
+<!-- ================= Summary Cards ================= -->
 <div class="accounts-summary">
-    <div class="summary-card">All Accounts Total: Rs {{ total_balance|floatformat:2 }}</div>
-    <div class="summary-card">Expenses so far: Rs {{ expenses|floatformat:2 }}</div>
-    <div class="summary-card">Income so far: Rs {{ income|floatformat:2 }}</div>
+    <div class="summary-card">
+        <div>Total Balance</div>
+        <div>Rs {{ total_balance|floatformat:2 }}</div>
+    </div>
+    <div class="summary-card">
+        <div>Total Income</div>
+        <div>Rs {{ total_income|floatformat:2 }}</div>
+    </div>
+    <div class="summary-card">
+        <div>Total Expenses</div>
+        <div>Rs {{ total_expense|floatformat:2 }}</div>
+    </div>
 </div>
 
-<!-- Account Cards -->
-<div class="accounts-cards">
-    {% if accounts %}
-        {% for account in accounts %}
-        <div class="account-card">
-            <span>{{ account.icon }} {{ account.name }}</span>
+<!-- ================= Scrollable Accounts ================= -->
+<div class="accounts-cards-container">
+    <div class="accounts-cards">
+        {% for account in user_accounts %}
+        <div class="account-card" data-id="{{ account.id }}">
+            <div class="account-info">
+                <div class="account-name">{{ account.name }}</div>
+                <div class="account-balance">Balance Rs {{ account.balance|floatformat:2 }}</div>
+            </div>
+
             {% if request.user.is_authenticated %}
             <div class="account-actions">
-                <button class="edit-btn" data-id="{{ account.id }}" data-name="{{ account.name }}" data-balance="{{ account.balance }}" data-icon="{{ account.icon }}">Edit</button>
-                <button class="delete-btn" data-id="{{ account.id }}" data-name="{{ account.name }}">Delete</button>
+                <button class="edit-btn"
+                        data-id="{{ account.id }}"
+                        data-name="{{ account.name }}"
+                        data-balance="{{ account.balance }}"
+                        data-icon="{{ account.icon }}">
+                    Edit
+                </button>
+
+                <button class="delete-btn"
+                        data-id="{{ account.id }}"
+                        data-name="{{ account.name }}">
+                    Delete
+                </button>
             </div>
             {% endif %}
         </div>
+        {% empty %}
+        <p>No accounts found.</p>
         {% endfor %}
+    </div>
+</div>
+
+<!-- ================= Add Account Button ================= -->
+<div class="add-account-btn">
+    {% if request.user.is_authenticated %}
+        <button id="openAddAccount">+ Add Account</button>
     {% else %}
-        <!-- Default accounts for guests -->
-        <div class="account-card">🏦 Bank - Rs 0.00</div>
-        <div class="account-card">💳 Card - Rs 0.00</div>
-        <div class="account-card">💰 Cash - Rs 0.00</div>
-        <div class="account-card">🐖 Saving - Rs 0.00</div>
+        <button type="button" data-requires-auth>+ Add Account</button>
     {% endif %}
 </div>
 
-<!-- Add Account Button -->
+<!-- ================= Add / Edit Popup (AUTH ONLY) ================= -->
 {% if request.user.is_authenticated %}
-<div class="add-account-btn">
-    <button id="openAddAccount">+ Add New Account</button>
-</div>
-{% else %}
-<div class="add-account-btn">
-    <button class="guest-add" data-type="account">+ Add New Account</button>
-</div>
-{% endif %}
-
-<!-- Add/Edit Popup (for logged-in users) -->
-{% if request.user.is_authenticated %}
-<div class="popup-overlay" id="popupOverlay">
+<div class="popup-overlay hidden" id="popupOverlay">
     <div class="popup-card">
         <h3 id="popupTitle">Add New Account</h3>
-        <form method="post" id="accountForm">{% csrf_token %}
+
+        <form id="accountForm">
+            {% csrf_token %}
+
+            <label for="id_name">Account Name:</label>
+            <input type="text" id="id_name" name="name" value="Untitled">
+
             <label for="id_initial_amount">Initial Amount:</label>
-            <input type="number" name="initial_amount" id="id_initial_amount" value="0.0" step="0.01">
+            <input type="number" id="id_initial_amount" name="initial_amount" value="0.0" step="0.01">
 
-            <label for="id_name">Name:</label>
-            <input type="text" name="name" id="id_name" value="Untitled">
-
-            <label for="id_icon">Icon:</label>
-            <input type="text" name="icon" id="id_icon" placeholder="Select icon">
+            <label>Pick an Icon:</label>
+            <div class="icon-picker">
+                {% for icon, label in default_account_icons %}
+                <label class="icon-box">
+                    <input type="radio" name="icon" value="{{ icon }}">
+                    <span class="icon">{{ icon }}</span>
+                </label>
+                {% endfor %}
+            </div>
 
             <div class="popup-actions">
                 <button type="button" id="cancelPopup">Cancel</button>
@@ -75,43 +103,33 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Popup -->
-<div class="popup-overlay" id="deleteOverlay">
+<!-- ================= Delete Popup ================= -->
+<div class="popup-overlay hidden" id="deleteOverlay">
     <div class="popup-card">
         <h3>Delete Account</h3>
         <p id="deleteMessage"></p>
-        <form method="post" id="deleteForm">{% csrf_token %}
+
+        <form id="deleteForm">
+            {% csrf_token %}
             <div class="popup-actions">
                 <button type="button" id="cancelDelete">Cancel</button>
-                <button type="submit">Delete</button>
+                <button type="submit" id="confirmDelete">Delete</button>
             </div>
         </form>
     </div>
 </div>
 {% endif %}
 
-<!-- Login Required Popup (for guests) -->
-<div class="popup-overlay" id="loginOverlay">
-    <div class="popup-card">
-        <h3>Login Required</h3>
-        <p>You must be logged in to perform this action.</p>
-        <div class="popup-actions">
-            <button type="button" id="cancelLogin">Cancel</button>
-            <a href="{% url 'userauths:login' %}"><button type="button">Go to Login</button></a>
-        </div>
-    </div>
-</div>
-
-<!-- Data URLs & Auth -->
+<!-- ================= JS Data ================= -->
 <div id="accountsData"
-     data-add-url="{% url 'finance:accounts' %}"
+     data-add-url="{% url 'finance:add_account' %}"
      data-edit-url="{% url 'finance:edit_account' 0 %}"
      data-delete-url="{% url 'finance:delete_account' 0 %}"
-     data-is-authenticated="{{ is_authenticated|yesno:'true,false' }}"></div>
+     data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}">
+</div>
 
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'js/accounts.js' %}"></script>
-<script src="{% static 'js/global.js' %}"></script>
 {% endblock %}

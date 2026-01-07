@@ -183,55 +183,119 @@ def delete_category(request, category_id):
     return render(request, 'finance/delete_category_modal.html', {'category': category})
 
 
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .models import Account
+from .utils import get_user_or_guest, calculate_totals
+
 # ---------------------------
-# ACCOUNTS CRUD
+# ACCOUNTS PAGE
 # ---------------------------
+# finance/views.py
+from django.shortcuts import render
+from .utils import get_user_or_guest, calculate_totals
+from .constants import DEFAULT_ACCOUNTS, DEFAULT_ACCOUNT_ICONS
+
 def accounts(request):
+    """
+    Accounts page with summary cards and scrollable account list.
+    Shows default accounts for guests using DEFAULT_ACCOUNTS from constants.py
+    """
     user = get_user_or_guest(request.user)
-    accounts = Account.objects.filter(user=user) if user else []
-    total_balance = sum(a.balance for a in accounts) if user else 0
+    
+    if user:
+        # Logged-in user: fetch real accounts
+        accounts_list = [
+            {
+                "id": acc.id,
+                "name": acc.name,
+                "balance": acc.balance,
+                "icon": acc.icon
+            } for acc in Account.objects.filter(user=user)
+        ]
+        total_balance, total_income, total_expense = calculate_totals(user)
+    else:
+        # Guest: use DEFAULT_ACCOUNTS from constants.py
+        accounts_list = [
+            {"id": i+1, "name": name, "balance": balance, "icon": icon}
+            for i, (name, icon, balance) in enumerate(DEFAULT_ACCOUNTS)
+        ]
+        total_balance, total_income, total_expense = 0.0, 0.0, 0.0
 
     return render(request, 'finance/accounts.html', {
         "active": "accounts",
-        "accounts": accounts,
+        "user_accounts": accounts_list,
         "total_balance": total_balance,
+        "total_income": total_income,
+        "total_expense": total_expense,
         "is_authenticated": bool(user),
+        "default_account_icons": DEFAULT_ACCOUNT_ICONS,  # for Add/Edit popup
     })
 
 
+# ---------------------------
+# ADD ACCOUNT (AJAX)
+# ---------------------------
+@login_required
+def add_account(request):
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        name = request.POST.get('name', '').strip()
+        initial_amount = float(request.POST.get('initial_amount') or 0)
+        icon = request.POST.get('icon', '💰')
+
+        if not name:
+            return JsonResponse({"success": False, "error": "Account name is required."})
+
+        account = Account.objects.create(
+            user=request.user,
+            name=name,
+            initial_amount=initial_amount,
+            balance=initial_amount,
+            icon=icon
+        )
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False, "error": "Invalid request."}, status=400)
+
+
+# ---------------------------
+# EDIT ACCOUNT (AJAX)
+# ---------------------------
+@login_required
 def edit_account(request, account_id):
-    user = get_user_or_guest(request.user)
-    if not user:
-        messages.warning(request, "You must be logged in to edit an account.")
-        return redirect('userauths:login')
+    account = get_object_or_404(Account, pk=account_id, user=request.user)
 
-    account = get_object_or_404(Account, pk=account_id, user=user)
-    if request.method == "POST":
-        form = AccountForm(request.POST, instance=account)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Account updated.")
-            return redirect('finance:accounts')
-    else:
-        form = AccountForm(instance=account)
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        name = request.POST.get('name', '').strip()
+        initial_amount = float(request.POST.get('initial_amount') or account.balance)
+        icon = request.POST.get('icon', account.icon)
 
-    return render(request,'finance/edit_account.html', {"form": form, "account": account})
+        if not name:
+            return JsonResponse({"success": False, "error": "Account name is required."})
+
+        account.name = name
+        account.initial_amount = initial_amount
+        account.balance = initial_amount
+        account.icon = icon
+        account.save()
+        return JsonResponse({"success": True})
+
+    return JsonResponse({"success": False, "error": "Invalid request."}, status=400)
 
 
+# ---------------------------
+# DELETE ACCOUNT (AJAX)
+# ---------------------------
+@login_required
 def delete_account(request, account_id):
-    user = get_user_or_guest(request.user)
-    if not user:
-        messages.warning(request, "You must be logged in to delete an account.")
-        return redirect('userauths:login')
+    account = get_object_or_404(Account, pk=account_id, user=request.user)
 
-    account = get_object_or_404(Account, pk=account_id, user=user)
-    if request.method == "POST":
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         account.delete()
-        messages.success(request, "Account deleted.")
-        return redirect('finance:accounts')
+        return JsonResponse({"success": True})
 
-    return render(request,'finance/delete_account.html', {"account": account})
-
+    return JsonResponse({"success": False, "error": "Invalid request."}, status=400)
 
 # ---------------------------
 # SETTINGS PAGE

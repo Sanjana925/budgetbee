@@ -1,70 +1,95 @@
-// finance/accounts.js
-// Handles Add/Edit/Delete popups for accounts
+document.addEventListener("DOMContentLoaded", () => {
 
-const accountsData = document.getElementById('accountsData');
-const ADD_URL = accountsData.dataset.addUrl;
-const EDIT_URL_TEMPLATE = accountsData.dataset.editUrl;
-const DELETE_URL_TEMPLATE = accountsData.dataset.deleteUrl;
-const IS_AUTH = accountsData.dataset.isAuthenticated === 'true';
+    const accountsData = document.getElementById('accountsData');
+    if (!accountsData) return;
 
-// Add/Edit Popup
-const openBtn = document.getElementById('openAddAccount');
-const overlay = document.getElementById('popupOverlay');
-const cancelBtn = document.getElementById('cancelPopup');
-const popupTitle = document.getElementById('popupTitle');
-const form = document.getElementById('accountForm');
-const nameInput = document.getElementById('id_name');
-const balanceInput = document.getElementById('id_initial_amount');
-const iconInput = document.getElementById('id_icon');
+    const IS_AUTH = accountsData.dataset.isAuthenticated === 'true';
 
-// Delete Popup
-const deleteOverlay = document.getElementById('deleteOverlay');
-const deleteForm = document.getElementById('deleteForm');
-const deleteMessage = document.getElementById('deleteMessage');
-const cancelDelete = document.getElementById('cancelDelete');
+    // 🚫 GUEST USERS: do nothing, let global.js handle popups
+    if (!IS_AUTH) return;
 
-// Login Popup
-const loginOverlay = document.getElementById('loginOverlay');
-const cancelLogin = document.getElementById('cancelLogin');
-cancelLogin.addEventListener('click', () => loginOverlay.style.display = 'none');
+    const ADD_URL = accountsData.dataset.addUrl;
+    const EDIT_URL_TEMPLATE = accountsData.dataset.editUrl;
+    const DELETE_URL_TEMPLATE = accountsData.dataset.deleteUrl;
 
-function showLoginPopup() { loginOverlay.style.display = 'flex'; }
+    // Auth-only elements
+    const overlay = document.getElementById('popupOverlay');
+    const deleteOverlay = document.getElementById('deleteOverlay');
+    const form = document.getElementById('accountForm');
+    const deleteForm = document.getElementById('deleteForm');
+    const popupTitle = document.getElementById('popupTitle');
 
-// ADD ACCOUNT
-openBtn.addEventListener('click', () => {
-    if (!IS_AUTH) { showLoginPopup(); return; }
-    popupTitle.textContent = "Add New Account";
-    form.action = ADD_URL;
-    nameInput.value = "Untitled";
-    balanceInput.value = "0.0";
-    iconInput.value = "";
-    overlay.style.display = "flex";
-});
-cancelBtn.addEventListener('click', () => overlay.style.display = "none");
+    const nameInput = document.getElementById('id_name');
+    const balanceInput = document.getElementById('id_initial_amount');
+    const iconRadios = document.querySelectorAll('input[name="icon"]');
 
-// EDIT ACCOUNT
-document.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        if (!IS_AUTH) { showLoginPopup(); return; }
-        const accountId = btn.dataset.id;
-        popupTitle.textContent = "Edit Account";
-        form.action = EDIT_URL_TEMPLATE.replace('0', accountId);
-        nameInput.value = btn.dataset.name;
-        balanceInput.value = btn.dataset.balance;
-        iconInput.value = btn.dataset.icon;
-        overlay.style.display = "flex";
+    // Cancel buttons
+    document.getElementById('cancelPopup')?.addEventListener('click', () => {
+        overlay.classList.add('hidden');
     });
-});
 
-// DELETE ACCOUNT
-document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        if (!IS_AUTH) { showLoginPopup(); return; }
-        const accountId = btn.dataset.id;
-        const accountName = btn.dataset.name;
-        deleteForm.action = DELETE_URL_TEMPLATE.replace('0', accountId);
-        deleteMessage.textContent = `Are you sure you want to delete "${accountName}"?`;
-        deleteOverlay.style.display = "flex";
+    document.getElementById('cancelDelete')?.addEventListener('click', () => {
+        deleteOverlay.classList.add('hidden');
     });
+
+    // Add Account
+    document.getElementById('openAddAccount')?.addEventListener('click', () => {
+        popupTitle.textContent = "Add New Account";
+        form.action = ADD_URL;
+        nameInput.value = "Untitled";
+        balanceInput.value = 0.0;
+        iconRadios.forEach(r => r.checked = false);
+        overlay.classList.remove('hidden');
+    });
+
+    // Edit
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            popupTitle.textContent = "Edit Account";
+            form.action = EDIT_URL_TEMPLATE.replace('0', id);
+            nameInput.value = btn.dataset.name;
+            balanceInput.value = btn.dataset.balance;
+            iconRadios.forEach(r => r.checked = r.value === btn.dataset.icon);
+            overlay.classList.remove('hidden');
+        });
+    });
+
+    // Delete
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            deleteForm.action = DELETE_URL_TEMPLATE.replace('0', id);
+            document.getElementById('deleteMessage').textContent =
+                `Are you sure you want to delete "${btn.dataset.name}"?`;
+            deleteOverlay.classList.remove('hidden');
+        });
+    });
+
+    // Submit add/edit
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const res = await fetch(form.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: new FormData(form)
+        });
+        const result = await res.json();
+        if (result.success) window.location.reload();
+        else alert(result.error || 'Error saving account');
+    });
+
+    // Submit delete
+    deleteForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const res = await fetch(deleteForm.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: new FormData(deleteForm)
+        });
+        const result = await res.json();
+        if (result.success) window.location.reload();
+        else alert(result.error || 'Error deleting account');
+    });
+
 });
-cancelDelete.addEventListener('click', () => deleteOverlay.style.display = "none");

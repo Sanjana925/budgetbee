@@ -1,58 +1,67 @@
-/* Summary cards */
+/* ================= Summary Cards ================= */
+
 .accounts-summary {
     display: flex;
-    justify-content: space-between;
-    gap: 10px;
+    gap: 15px;
     margin-bottom: 20px;
 }
-
 .summary-card {
     flex: 1;
     background-color: var(--color-white);
-    padding: 15px;
-    border-radius: 10px;
+    padding: 20px;
+    border-radius: 12px;
     text-align: center;
     font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    font-size: 16px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
 }
 
-/* Accounts cards */
+/* ================= Scrollable Accounts ================= */
+.accounts-cards-container {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
 .accounts-cards {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
 }
-
 .account-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background-color: var(--color-white);
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.12);
+    font-size: 18px;
+    transition: 0.3s;
+}
+.account-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.18);
 }
 
+/* ================= Account Buttons ================= */
 .account-actions button {
-    margin-left: 5px;
-    padding: 5px 10px;
-    border-radius: 6px;
+    margin-left: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
     border: none;
     cursor: pointer;
 }
-
 .edit-btn { background-color: #5667FF; color: #fff; }
 .delete-btn { background-color: #FF5656; color: #fff; }
 
-/* Add New Account Button */
+/* ================= Add Account Button ================= */
 .add-account-btn {
     text-align: center;
-    margin: 20px 0;
+    margin: 10px 0;
 }
-
 .add-account-btn button {
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 12px 25px;
+    border-radius: 12px;
     border: none;
     background-color: var(--color-primary);
     color: white;
@@ -60,70 +69,89 @@
     cursor: pointer;
 }
 
-/* Popup Overlay (Add/Edit/Delete) */
-.popup-overlay {
+/* ================= Popups (Add/Edit/Delete) ================= */
+#popupOverlay,
+#deleteOverlay {
     display: none;
     position: fixed;
     inset: 0;
     background-color: rgba(0,0,0,0.5);
     justify-content: center;
     align-items: center;
-    z-index: 100;
+    z-index: 1000;
 }
 
-/* Popup Card */
-.popup-card {
+#popupOverlay .popup-card,
+#deleteOverlay .popup-card {
     background-color: var(--color-white);
-    padding: 20px;
-    border-radius: 12px;
-    width: 400px;
+    padding: 25px;
+    border-radius: 14px;
+    width: 450px;
+    max-width: 90%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
+    text-align: center;
 }
 
-.popup-card input {
-    padding: 8px;
-    border-radius: 6px;
+/* Inputs */
+.popup-card input[type="text"],
+.popup-card input[type="number"] {
+    padding: 10px;
+    border-radius: 8px;
     border: 1px solid #ccc;
+    font-size: 16px;
+    width: 100%;
 }
 
-.note {
-    font-size: 12px;
-    color: #888;
+/* Icon Picker */
+.icon-picker {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+.icon-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f2f2f2;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 28px;
+}
+.icon-box input { display: none; }
+.icon-box input:checked + .icon {
+    border: 2px solid #007bff;
+    border-radius: 8px;
 }
 
+/* Popup Buttons */
 .popup-actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
 }
+#cancelPopup, #cancelDelete { background-color: #ccc; color: #333; }
+#confirmDelete { background-color: #FF3B3B; color: white; }
+#confirmDelete:hover { background-color: #e63232; }
 
-.popup-actions button {
-    padding: 8px 15px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
+/* ================= Scrollbars ================= */
+.accounts-cards-container::-webkit-scrollbar {
+    width: 6px;
 }
-
-/* Add/Edit popup buttons */
-#savePopup {
-    background-color: var(--color-primary);
-    color: white;
+.accounts-cards-container::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 3px;
 }
+.accounts-cards-container::-webkit-scrollbar-track { background: transparent; }
 
-#cancelPopup {
-    background-color: #ccc;
-    color: #333;
-}
-
-/* Delete popup buttons */
-#confirmDelete {
-    background-color: #FF5656;
-    color: white;
-}
-
-#cancelDelete {
-    background-color: #ccc;
-    color: #333;
+/* ================= Responsive ================= */
+@media (max-width:768px){
+    .accounts-summary { flex-direction: column; }
+    .accounts-cards { gap: 10px; }
+    .popup-card { width: 90%; }
 }
