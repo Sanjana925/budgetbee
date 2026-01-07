@@ -12,50 +12,103 @@
 
     <!-- HEADER: Toggle + Add -->
     <div class="category-header">
-
-        <!-- Toggle Buttons -->
         <div class="toggle">
             <a href="?type=expense" class="toggle-btn {% if category_type == 'expense' %}active{% endif %}">Expense</a>
             <a href="?type=income" class="toggle-btn {% if category_type == 'income' %}active{% endif %}">Income</a>
         </div>
 
-        <!-- Add Category Button -->
         {% if request.user.is_authenticated %}
-            <a href="{% url 'finance:add-category' %}" class="add-btn">+</a>
+            <!-- Logged-in: show popup -->
+            <button id="openAddCategory" class="add-btn">+</button>
         {% else %}
-            <button class="add-btn guest-add" data-type="category">+</button>
+            <!-- Guest: trigger global login popup -->
+            <button class="add-btn" data-requires-auth>+</button>
         {% endif %}
-
     </div>
 
     <!-- CATEGORY LIST -->
     <div class="category-list">
-        {% if categories %}
-            {% for cat in categories %}
-            <div class="category-item" style="--cat-color: {{ cat.color }}">
-                <div class="left">
-                    <span class="icon">{{ cat.icon }}</span>
-                    <span class="name">{{ cat.name }}</span>
-                </div>
-                <div class="right">
-                    {% if request.user.is_authenticated %}
-                        <a href="{% url 'finance:edit-category' cat.id %}">✏️</a>
-                        <a href="{% url 'finance:delete-category' cat.id %}">🗑️</a>
-                    {% endif %}
-                </div>
+        {% for cat in categories %}
+        <div class="category-item" style="--cat-color: {{ cat.color }}">
+            <div class="left">
+                <span class="icon">{{ cat.icon }}</span>
+                <span class="name">{{ cat.name }}</span>
             </div>
-            {% endfor %}
-        {% else %}
-            <!-- Default categories for guest -->
-            <div class="category-item" style="--cat-color:#FF6384">
-                <div class="left"><span class="icon">🍔</span> <span class="name">Food</span></div>
+            <div class="right">
+                {% if request.user.is_authenticated %}
+                    <button class="edit-btn"
+                            data-id="{{ cat.id }}"
+                            data-name="{{ cat.name }}"
+                            data-icon="{{ cat.icon }}"
+                            data-color="{{ cat.color }}">✏️</button>
+                    <button class="delete-btn"
+                            data-id="{{ cat.id }}"
+                            data-name="{{ cat.name }}">🗑️</button>
+                {% endif %}
             </div>
-            <div class="category-item" style="--cat-color:#36A2EB">
-                <div class="left"><span class="icon">💵</span> <span class="name">Salary</span></div>
-            </div>
-            <p class="empty-text">No more categories</p>
-        {% endif %}
+        </div>
+        {% empty %}
+        <p class="empty-text">No categories found.</p>
+        {% endfor %}
     </div>
-
 </div>
+
+<!-- ================= Add/Edit Category Popup (AUTH ONLY) ================= -->
+{% if request.user.is_authenticated %}
+<div class="popup-overlay hidden" id="categoryPopup">
+    <div class="popup-card">
+        <h3 id="popupTitle">Add Category</h3>
+        <form id="categoryForm">
+            {% csrf_token %}
+            <label for="id_name">Category Name:</label>
+            <input type="text" id="id_name" name="name" value="Untitled">
+
+            <label>Pick an Icon:</label>
+            <div class="icon-picker">
+                {% for icon,label in default_category_icons %}
+                <label class="icon-box">
+                    <input type="radio" name="icon" value="{{ icon }}">
+                    <span>{{ icon }}</span>
+                </label>
+                {% endfor %}
+            </div>
+
+            <label>Pick a Color:</label>
+            <div class="color-picker">
+                {% for color in default_category_colors %}
+                <label class="color-box">
+                    <input type="radio" name="color" value="{{ color }}">
+                    <span class="{{ color_class }}"></span>
+                </label>
+                {% endfor %}
+            </div>
+
+            <div class="popup-actions">
+                <button type="button" id="cancelCategory">Cancel</button>
+                <button type="submit" id="saveCategory">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ================= Delete Category Popup ================= -->
+<div class="popup-overlay hidden" id="deleteCategoryPopup">
+    <div class="popup-card">
+        <h3>Delete Category</h3>
+        <p id="deleteCategoryMessage"></p>
+        <form id="deleteCategoryForm">
+            {% csrf_token %}
+            <div class="popup-actions">
+                <button type="button" id="cancelDeleteCategory">Cancel</button>
+                <button type="submit" id="confirmDeleteCategory">Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/category.js' %}"></script>
 {% endblock %}

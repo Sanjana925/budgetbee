@@ -8,6 +8,9 @@ from .forms import AccountForm, CategoryForm
 from .models import Account, Category, Transaction
 from .utils import get_user_or_guest, calculate_totals, prepare_chart_data
 
+# finance/views.py
+from .constants import DEFAULT_CATEGORY_ICONS, DEFAULT_CATEGORY_COLORS, DEFAULT_CATEGORIES
+from django.contrib.auth.decorators import login_required
 
 # ---------------------------
 # HOME DASHBOARD
@@ -105,13 +108,15 @@ def chart(request):
     })
 
 
-# ---------------------------
-# CATEGORY VIEWS
-# ---------------------------
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from .models import Category
+from .forms import CategoryForm
+from .utils import get_user_or_guest
+
 def category(request):
     """
-    List categories.
-    Guests see empty/default categories.
+    Return categories list (guest defaults or user-specific).
     """
     ctype = request.GET.get('type', 'expense')
     user = get_user_or_guest(request.user)
@@ -119,69 +124,63 @@ def category(request):
     if user:
         categories = Category.objects.filter(user=user, type=ctype)
     else:
-        categories = []  # could provide default categories
+        categories = [
+            {"id": i+1, "name": name, "icon": icon, "color": color}
+            for i, (name, icon, color) in enumerate(DEFAULT_CATEGORIES.get(ctype, []))
+        ]
 
     return render(request, 'finance/category.html', {
-        'categories': categories,
-        'category_type': ctype,
-        'is_authenticated': bool(user),
+        "categories": categories,
+        "category_type": ctype,
+        "is_authenticated": bool(user),
+        "default_category_icons": DEFAULT_CATEGORY_ICONS,
+        "default_category_colors": DEFAULT_CATEGORY_COLORS,
     })
 
 
 def add_category(request):
     user = get_user_or_guest(request.user)
     if not user:
-        messages.warning(request, "You must be logged in to add a category.")
-        return redirect('userauths:login')
+        return JsonResponse({"success": False, "error": "Login required"}, status=403)
 
-    if request.method == "POST":
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         form = CategoryForm(request.POST)
         if form.is_valid():
             cat = form.save(commit=False)
             cat.user = user
             cat.save()
-            messages.success(request, "Category added.")
-            return redirect(f"{reverse('finance:category')}?type={cat.type}")
-    else:
-        form = CategoryForm()
-
-    return render(request, 'finance/category_modal.html', {'form': form, 'action': 'Add'})
+            return JsonResponse({"success": True})
+        return JsonResponse({"success": False, "error": form.errors.as_json()})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
 
 def edit_category(request, category_id):
     user = get_user_or_guest(request.user)
     if not user:
-        messages.warning(request, "You must be logged in to edit a category.")
-        return redirect('userauths:login')
+        return JsonResponse({"success": False, "error": "Login required"}, status=403)
 
     category = get_object_or_404(Category, id=category_id, user=user)
 
-    if request.method == "POST":
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         form = CategoryForm(request.POST, instance=category)
         if form.is_valid():
             form.save()
-            messages.success(request, "Category updated.")
-            return redirect(f"{reverse('finance:category')}?type={form.cleaned_data['type']}")
-    else:
-        form = CategoryForm(instance=category)
-
-    return render(request,'finance/category_modal.html',{'form': form, 'action': 'Edit'})
+            return JsonResponse({"success": True})
+        return JsonResponse({"success": False, "error": form.errors.as_json()})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
 
 def delete_category(request, category_id):
     user = get_user_or_guest(request.user)
     if not user:
-        messages.warning(request, "You must be logged in to delete a category.")
-        return redirect('userauths:login')
+        return JsonResponse({"success": False, "error": "Login required"}, status=403)
 
     category = get_object_or_404(Category, id=category_id, user=user)
-    if request.method == "POST":
-        ctype = category.type
-        category.delete()
-        messages.success(request, "Category deleted.")
-        return redirect(f"{reverse('finance:category')}?type={ctype}")
-    return render(request, 'finance/delete_category_modal.html', {'category': category})
 
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        category.delete()
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
