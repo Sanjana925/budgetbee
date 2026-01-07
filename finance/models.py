@@ -1,11 +1,12 @@
 from django.db import models
 from django.core.validators import MinValueValidator
-from userauths.models import User
 from django.utils import timezone
+from userauths.models import User
+
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from .constants import DEFAULT_ACCOUNT_ICONS
 
+from .constants import DEFAULT_ACCOUNT_ICONS
 
 class Customer(models.Model):
     user = models.OneToOneField(User, null=True, blank=True, on_delete=models.CASCADE)
@@ -51,32 +52,10 @@ class Category(models.Model):
 class Transaction(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0.01)])
     type = models.CharField(max_length=10, choices=[('income', 'Income'), ('expense', 'Expense')])
     note = models.CharField(max_length=255, blank=True)
     date = models.DateField(default=timezone.now)
 
     def __str__(self):
         return f"{self.type} - Rs {self.amount}"
-
-
-# ----------------------------
-# Auto-update account balance
-# ----------------------------
-@receiver(post_save, sender=Transaction)
-def update_balance_on_save(sender, instance, created, **kwargs):
-    if created:
-        if instance.type == "expense":
-            instance.account.balance -= instance.amount
-        else:
-            instance.account.balance += instance.amount
-        instance.account.save()
-
-
-@receiver(post_delete, sender=Transaction)
-def update_balance_on_delete(sender, instance, **kwargs):
-    if instance.type == "expense":
-        instance.account.balance += instance.amount
-    else:
-        instance.account.balance -= instance.amount
-    instance.account.save()

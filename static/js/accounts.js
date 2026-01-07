@@ -4,6 +4,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!accountsData) return;
 
     const IS_AUTH = accountsData.dataset.isAuthenticated === 'true';
+console.log("IS_AUTH:", IS_AUTH);
+console.log("Add button:", document.getElementById('openAddAccount'));
+console.log("Edit buttons:", document.querySelectorAll('.edit-btn'));
+console.log("Delete buttons:", document.querySelectorAll('.delete-btn'));
 
     // 🚫 GUEST USERS: do nothing, let global.js handle popups
     if (!IS_AUTH) return;
@@ -93,3 +97,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 });
+

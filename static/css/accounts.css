@@ -70,9 +70,11 @@
 }
 
 /* ================= Popups (Add/Edit/Delete) ================= */
+
+/* ================= Popups (Add/Edit/Delete) ================= */
 #popupOverlay,
 #deleteOverlay {
-    display: none;
+    display: none; /* hidden by default */
     position: fixed;
     inset: 0;
     background-color: rgba(0,0,0,0.5);
@@ -81,6 +83,13 @@
     z-index: 1000;
 }
 
+/* SHOW popups when hidden class is removed */
+#popupOverlay:not(.hidden),
+#deleteOverlay:not(.hidden) {
+    display: flex; /* make visible */
+}
+
+/* Popup card */
 #popupOverlay .popup-card,
 #deleteOverlay .popup-card {
     background-color: var(--color-white);
@@ -154,4 +163,8 @@
     .accounts-summary { flex-direction: column; }
     .accounts-cards { gap: 10px; }
     .popup-card { width: 90%; }
+}
+#popupOverlay:not(.hidden),
+#deleteOverlay:not(.hidden) {
+    display: flex;
 }
