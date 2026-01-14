@@ -146,3 +146,54 @@
     color: var(--color-primary);
     cursor: pointer;
 }
+
+.transactions-container {
+    max-height: 500px;  /* scrollable height */
+    overflow-y: auto;
+    margin: 10px 20px 80px 20px;
+    padding-right: 5px;
+}
+
+.date-card {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 15px;
+    background: #f9f9f9;
+}
+
+.date-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.transaction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.amount.income {
+    color: green;
+}
+
+.amount.expense {
+    color: red;
+}
+
+.category .icon {
+    margin-right: 6px;
+}

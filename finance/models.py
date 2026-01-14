@@ -48,12 +48,25 @@ class Category(models.Model):
     def __str__(self):
         return f"{self.name} ({self.type})"
 
-
 class Transaction(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
-    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0.01)])
-    type = models.CharField(max_length=10, choices=[('income', 'Income'), ('expense', 'Expense')])
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(0.01)]
+    )
+    type = models.CharField(
+        max_length=10,
+        choices=[('income', 'Income'), ('expense', 'Expense')]
+    )
     note = models.CharField(max_length=255, blank=True)
     date = models.DateField(default=timezone.now)
 

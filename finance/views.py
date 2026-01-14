@@ -1,5 +1,5 @@
-# finance/views.py
 from decimal import Decimal, InvalidOperation
+from collections import defaultdict
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
 from .forms import AccountForm, CategoryForm
+from .forms import TransactionForm
 from .models import Account, Category, Transaction
 from .utils import get_user_or_guest, calculate_totals, prepare_chart_data
 from .constants import DEFAULT_ACCOUNTS, DEFAULT_ACCOUNT_ICONS, DEFAULT_CATEGORIES, DEFAULT_CATEGORY_ICONS, DEFAULT_CATEGORY_COLORS
@@ -16,14 +17,21 @@ from .signals import recalc_account_balance
 # HOME DASHBOARD
 # ---------------------------
 def home(request):
-    """
-    Home dashboard: shows accounts, balance, income/expense.
-    Guests see empty/default accounts.
-    """
     user = get_user_or_guest(request.user)
     total_income, total_expense, total_balance = calculate_totals(user)
-
     accounts_list = Account.objects.filter(user=user) if user else []
+
+    # Transactions grouped by date
+    transactions_by_date = defaultdict(lambda: {"items": [], "total_income": 0, "total_expense": 0})
+    if user:
+        txs = Transaction.objects.filter(account__user=user).order_by('-date')
+        for tx in txs:
+            date_str = str(tx.date)
+            transactions_by_date[date_str]["items"].append(tx)
+            if tx.type == "income":
+                transactions_by_date[date_str]["total_income"] += tx.amount
+            else:
+                transactions_by_date[date_str]["total_expense"] += tx.amount
 
     return render(request, 'finance/home.html', {
         "active": "home",
@@ -31,60 +39,117 @@ def home(request):
         "total_income": total_income,
         "total_expense": total_expense,
         "balance": total_balance,
+        "transactions_by_date": dict(transactions_by_date),
         "is_authenticated": bool(user),
     })
 
+
 # ---------------------------
-# ADD TRANSACTION (Modal)
+# ADD TRANSACTION (Modal + POST)
 # ---------------------------
+
 def add_transaction(request):
     user = get_user_or_guest(request.user)
     if not user:
         return JsonResponse({"error": "login_required"}, status=403)
 
+    if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
+        form = TransactionForm(request.POST)
+        if form.is_valid():
+            tx = form.save(commit=False)
+            tx.account = Account.objects.get(id=request.POST.get("account"), user=user)
+            tx.category = Category.objects.get(id=request.POST.get("category"), user=user)
+            tx.save()
+            total_income, total_expense, total_balance = calculate_totals(user)
+            return JsonResponse({
+                "success": True,
+                "total_income": float(total_income),
+                "total_expense": float(total_expense),
+                "balance": float(total_balance),
+                "transaction": {
+                    "id": tx.id,
+                    "amount": float(tx.amount),
+                    "type": tx.type,
+                    "category_name": tx.category.name,
+                    "category_icon": tx.category.icon,
+                    "date": str(tx.date),
+                    "note": tx.note
+                }
+            })
+        else:
+            return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
+
+    # GET request → render modal
     accounts = Account.objects.filter(user=user)
     categories = Category.objects.filter(user=user)
     today = timezone.now().date()
+    return render(request, 'finance/transaction.html', {
+        "accounts": accounts,
+        "categories": categories,
+        "today": today,
+    })
 
-    if request.method == "POST":
-        try:
-            account = Account.objects.get(id=request.POST.get("account"), user=user)
-            category = Category.objects.get(id=request.POST.get("category"), user=user)
-            amount = Decimal(request.POST.get("amount"))
-            t_type = request.POST.get("type")
-            note = request.POST.get("note", "")
-            date = request.POST.get("date", today)
+# ---------------------------
+# EDIT TRANSACTION
+# ---------------------------
+@login_required
+def edit_transaction(request, transaction_id):
+    tx = get_object_or_404(Transaction, id=transaction_id, account__user=request.user)
 
-            if amount <= 0:
-                return JsonResponse({"error": "Amount must be greater than 0"}, status=400)
-
-            Transaction.objects.create(
-                account=account,
-                category=category,
-                amount=amount,
-                type=t_type,
-                note=note,
-                date=date
-            )
-
-            # Recalculate totals
-            total_income, total_expense, total_balance = calculate_totals(user)
-
+    if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
+        form = TransactionForm(request.POST, instance=tx)
+        if form.is_valid():
+            tx = form.save(commit=False)
+            tx.account = Account.objects.get(id=request.POST.get("account"), user=request.user)
+            tx.category = Category.objects.get(id=request.POST.get("category"), user=request.user)
+            tx.save()
+            total_income, total_expense, total_balance = calculate_totals(request.user)
             return JsonResponse({
                 "success": True,
-                "total_income": total_income,
-                "total_expense": total_expense,
-                "balance": total_balance
+                "total_income": float(total_income),
+                "total_expense": float(total_expense),
+                "balance": float(total_balance),
+                "transaction": {
+                    "id": tx.id,
+                    "amount": float(tx.amount),
+                    "type": tx.type,
+                    "category_name": tx.category.name,
+                    "category_icon": tx.category.icon,
+                    "date": str(tx.date),
+                    "note": tx.note
+                }
             })
+        else:
+            return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
 
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=400)
-
-    return render(request, 'finance/transaction_modal.html', {
-        'accounts': accounts,
-        'categories': categories,
-        'today': today
+    # GET request → render modal with pre-filled transaction
+    accounts = Account.objects.filter(user=request.user)
+    categories = Category.objects.filter(user=request.user)
+    return render(request, 'finance/transaction.html', {
+        "transaction": tx,
+        "accounts": accounts,
+        "categories": categories,
+        "today": tx.date,
     })
+
+# ---------------------------
+# DELETE TRANSACTION
+# ---------------------------
+@login_required
+def delete_transaction(request, transaction_id):
+    tx = get_object_or_404(Transaction, id=transaction_id, account__user=request.user)
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        tx.delete()
+        total_income, total_expense, total_balance = calculate_totals(request.user)
+        return JsonResponse({
+            "success": True,
+            "total_income": float(total_income),
+            "total_expense": float(total_expense),
+            "balance": float(total_balance),
+            "transaction_id": transaction_id
+        })
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
 
 # ---------------------------
 # CHART VIEW
@@ -102,8 +167,9 @@ def chart(request):
         'is_authenticated': bool(user),
     })
 
+
 # ---------------------------
-# CATEGORY VIEWS
+# CATEGORY CRUD
 # ---------------------------
 def category(request):
     ctype = request.GET.get('type', 'expense')
@@ -125,27 +191,23 @@ def category(request):
         "default_category_colors": DEFAULT_CATEGORY_COLORS,
     })
 
-def add_category(request):
-    user = get_user_or_guest(request.user)
-    if not user:
-        return JsonResponse({"success": False, "error": "Login required"}, status=403)
 
+@login_required
+def add_category(request):
     if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         form = CategoryForm(request.POST)
         if form.is_valid():
             cat = form.save(commit=False)
-            cat.user = user
+            cat.user = request.user
             cat.save()
             return JsonResponse({"success": True})
         return JsonResponse({"success": False, "error": form.errors.as_json()})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-def edit_category(request, category_id):
-    user = get_user_or_guest(request.user)
-    if not user:
-        return JsonResponse({"success": False, "error": "Login required"}, status=403)
 
-    category = get_object_or_404(Category, id=category_id, user=user)
+@login_required
+def edit_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id, user=request.user)
     if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         form = CategoryForm(request.POST, instance=category)
         if form.is_valid():
@@ -154,19 +216,18 @@ def edit_category(request, category_id):
         return JsonResponse({"success": False, "error": form.errors.as_json()})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-def delete_category(request, category_id):
-    user = get_user_or_guest(request.user)
-    if not user:
-        return JsonResponse({"success": False, "error": "Login required"}, status=403)
 
-    category = get_object_or_404(Category, id=category_id, user=user)
+@login_required
+def delete_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id, user=request.user)
     if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         category.delete()
         return JsonResponse({"success": True})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
+
 # ---------------------------
-# ACCOUNTS VIEWS
+# ACCOUNTS CRUD
 # ---------------------------
 def accounts(request):
     user = get_user_or_guest(request.user)
@@ -188,64 +249,54 @@ def accounts(request):
         "default_account_icons": DEFAULT_ACCOUNT_ICONS
     })
 
+
 @login_required
 def add_account(request):
     if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         name = request.POST.get('name', '').strip()
         icon = request.POST.get('icon', '💰')
-
         initial_amount_str = request.POST.get('initial_amount', '').strip()
         try:
             initial_amount = Decimal(initial_amount_str) if initial_amount_str else Decimal(0)
         except InvalidOperation:
             return JsonResponse({"success": False, "error": "Invalid initial amount"}, status=400)
-
         if not name:
             return JsonResponse({"success": False, "error": "Account name required"})
-
         account = Account.objects.create(user=request.user, name=name, initial_amount=initial_amount, balance=initial_amount, icon=icon)
         return JsonResponse({"success": True})
-
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
 
 @login_required
 def edit_account(request, account_id):
     account = get_object_or_404(Account, pk=account_id, user=request.user)
-
     if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         name = request.POST.get('name', '').strip()
         icon = request.POST.get('icon', account.icon)
-
         initial_amount_str = request.POST.get('initial_amount', '').strip()
         try:
             initial_amount = Decimal(initial_amount_str) if initial_amount_str else account.initial_amount
         except InvalidOperation:
             return JsonResponse({"success": False, "error": "Invalid initial amount"}, status=400)
-
         if not name:
             return JsonResponse({"success": False, "error": "Account name required"})
-
         account.name = name
         account.initial_amount = initial_amount
         account.icon = icon
         account.save()
-
-        # Recalculate balance using signal
         recalc_account_balance(account)
-
         return JsonResponse({"success": True})
-
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
 
 @login_required
 def delete_account(request, account_id):
     account = get_object_or_404(Account, pk=account_id, user=request.user)
-
     if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         account.delete()
         return JsonResponse({"success": True})
-
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
 
 # ---------------------------
 # SETTINGS PAGE
@@ -255,5 +306,4 @@ def settings(request):
     if not user:
         messages.warning(request, "You must be logged in to access settings.")
         return redirect('userauths:login')
-
-    return render(request, 'finance/settings.html', {'active':'settings'})
+    return render(request, 'finance/settings.html', {'active': 'settings'})

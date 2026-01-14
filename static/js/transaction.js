@@ -1,50 +1,221 @@
-// finance/transaction.js
-// Transaction modal JS
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     const btn = document.getElementById("newTransactionBtn");
-    if (!btn) return;
-    btn.onclick = openModal;
+    if (btn) btn.addEventListener("click", () => openModal());
+
+    // Delegated click for edit/delete buttons
+    document.body.addEventListener("click", function (e) {
+        if (e.target.matches(".edit-transaction")) {
+            const txId = e.target.dataset.id;
+            openModal(txId);
+        }
+        if (e.target.matches(".delete-transaction")) {
+            const txId = e.target.dataset.id;
+            deleteTransaction(txId);
+        }
+    });
 });
 
-function openModal() {
-    if (document.getElementById("transactionModal")) return;
+// ----------------------
+// CSRF Helper
+// ----------------------
+function getCSRFToken() {
+    const name = "csrftoken";
+    const cookies = document.cookie.split(";").map(c => c.trim());
+    for (let c of cookies) {
+        if (c.startsWith(name + "=")) return decodeURIComponent(c.slice(name.length + 1));
+    }
+    return null;
+}
 
-    fetch("/transaction-modal/") // Fetch modal HTML
-        .then(res => res.text())
+// ----------------------
+// OPEN MODAL
+// ----------------------
+function openModal(txId = null) {
+    closeModal();
+
+    let url = "/transaction/";
+    if (txId) url = `/transaction/edit/${txId}/`;
+
+    fetch(url)
+        .then(res => res.ok ? res.text() : Promise.reject("Failed to load modal"))
         .then(html => {
             document.body.insertAdjacentHTML("beforeend", html);
             document.body.classList.add("modal-open");
 
             const form = document.getElementById("transactionForm");
-            form.addEventListener("submit", function(e) {
+            if (!form) return;
+
+            form.addEventListener("submit", function (e) {
                 e.preventDefault();
                 const data = new FormData(form);
+                const postUrl = txId ? `/transaction/edit/${txId}/` : "/transaction/";
 
-                fetch("/transaction/add/", {
+                fetch(postUrl, {
                     method: "POST",
                     body: data,
-                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRFToken": getCSRFToken()
+                    },
                 })
                 .then(res => res.json())
                 .then(res => {
                     if (res.success) {
-                        // Update Home summary
-                        const amounts = document.querySelectorAll(".summary-left .amount");
-                        amounts[0].innerText = "Rs. " + res.total_income.toFixed(2);
-                        amounts[1].innerText = "Rs. " + res.total_expense.toFixed(2);
-                        document.querySelector(".summary-right .balance-amount").innerText = "Rs. " + res.balance.toFixed(2);
-
+                        updateTransactionList(res.transaction);
                         closeModal();
                     } else if (res.error === "login_required") {
                         window.location.href = "/userauths/login/";
+                    } else {
+                        console.error(res.error);
+                        alert(res.error);
                     }
-                });
+                })
+                .catch(err => console.error("Error submitting transaction:", err));
             });
-        });
+        })
+        .catch(err => console.error("Failed to load modal:", err));
 }
 
+// ----------------------
+// DELETE TRANSACTION
+// ----------------------
+function deleteTransaction(txId) {
+    if (!confirm("Are you sure you want to delete this transaction?")) return;
+
+    fetch(`/transaction/delete/${txId}/`, {
+        method: "POST",
+        headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRFToken": getCSRFToken()
+        },
+    })
+    .then(res => res.json())
+    .then(res => {
+        if (res.success) {
+            const txItem = document.querySelector(`.transaction-item[data-id="${txId}"]`);
+            if (txItem) {
+                const dateCard = txItem.closest(".date-card");
+                txItem.remove();
+
+                // Remove date card if empty
+                if (dateCard && dateCard.querySelectorAll(".transaction-item").length === 0) {
+                    dateCard.remove();
+                }
+
+                updateTopSummary(res);
+            }
+
+            // Show empty state if no transactions
+            const container = document.getElementById("transactionsContainer");
+            const emptyState = document.getElementById("emptyState");
+            if (container && container.children.length === 0 && emptyState) {
+                emptyState.style.display = "flex";
+            }
+        } else {
+            console.error(res.error);
+            alert(res.error);
+        }
+    })
+    .catch(err => console.error("Error deleting transaction:", err));
+}
+
+// ----------------------
+// CLOSE MODAL
+// ----------------------
 function closeModal() {
     const modal = document.getElementById("transactionModal");
     if (modal) modal.remove();
     document.body.classList.remove("modal-open");
+}
+
+// ----------------------
+// UPDATE TRANSACTION LIST
+// ----------------------
+function updateTransactionList(tx) {
+    if (!tx || !tx.date) return;
+
+    const container = document.getElementById("transactionsContainer");
+    if (!container) return;
+
+    const emptyState = document.getElementById("emptyState");
+    if (emptyState) emptyState.style.display = "none";
+
+    // Check if date card exists
+    let dateCard = container.querySelector(`[data-date="${tx.date}"]`);
+    if (!dateCard) {
+        dateCard = document.createElement("div");
+        dateCard.classList.add("date-card");
+        dateCard.dataset.date = tx.date;
+
+        // Plain date displayed
+        dateCard.innerHTML = `
+            <div class="date-header">
+                <span class="date-label">${tx.date}</span>
+                <span class="summary">Income: Rs. 0.00 | Expense: Rs. 0.00</span>
+            </div>
+            <div class="transaction-list"></div>
+        `;
+
+        // Insert newest date at top
+        const existingCards = Array.from(container.querySelectorAll(".date-card"));
+        const inserted = existingCards.find(c => new Date(c.dataset.date) < new Date(tx.date));
+        if (inserted) container.insertBefore(dateCard, inserted);
+        else container.appendChild(dateCard);
+    }
+
+    const list = dateCard.querySelector(".transaction-list");
+
+    let txItem = list.querySelector(`[data-id="${tx.id}"]`);
+    if (!txItem) {
+        txItem = document.createElement("div");
+        txItem.classList.add("transaction-item");
+        txItem.dataset.id = tx.id;
+        list.insertBefore(txItem, list.firstChild); // newest first
+    }
+
+    txItem.innerHTML = `
+        <span class="category"><i class="icon">${tx.category_icon}</i> ${tx.category_name}</span>
+        <span class="amount ${tx.type}">${tx.type === "income" ? "+" : "-"} Rs. ${parseFloat(tx.amount).toFixed(2)}</span>
+        <button class="edit-transaction" data-id="${tx.id}">✏️</button>
+        <button class="delete-transaction" data-id="${tx.id}">🗑️</button>
+    `;
+
+    updateDateSummary(dateCard);
+    updateTopSummary(tx);
+}
+
+// ----------------------
+// UPDATE DATE SUMMARY
+// ----------------------
+function updateDateSummary(dateCard) {
+    if (!dateCard) return;
+    const items = dateCard.querySelectorAll(".transaction-item");
+    let income = 0, expense = 0;
+
+    items.forEach(item => {
+        const amtElem = item.querySelector(".amount");
+        if (!amtElem) return;
+        const amtText = amtElem.textContent.replace(/[^\d.]/g, "");
+        const amt = parseFloat(amtText) || 0;
+        if (amtElem.classList.contains("income")) income += amt;
+        else expense += amt;
+    });
+
+    const summary = dateCard.querySelector(".summary");
+    if (summary) summary.textContent = `Income: Rs. ${income.toFixed(2)} | Expense: Rs. ${expense.toFixed(2)}`;
+}
+
+// ----------------------
+// UPDATE TOP SUMMARY
+// ----------------------
+function updateTopSummary(data) {
+    const amounts = document.querySelectorAll(".summary-left .amount");
+    if (amounts.length >= 2) {
+        amounts[0].innerText = "Rs. " + parseFloat(data.total_income || 0).toFixed(2);
+        amounts[1].innerText = "Rs. " + parseFloat(data.total_expense || 0).toFixed(2);
+    }
+    const balanceElem = document.querySelector(".summary-right .balance-amount");
+    if (balanceElem) {
+        balanceElem.innerText = "Rs. " + parseFloat(data.balance || 0).toFixed(2);
+    }
 }

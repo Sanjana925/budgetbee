@@ -1,6 +1,6 @@
 # finance/forms.py
 from django import forms
-from .models import Account, Category
+from .models import Account, Category, Transaction
 
 class AccountForm(forms.ModelForm):
     class Meta:
@@ -21,4 +21,18 @@ class CategoryForm(forms.ModelForm):
             'icon': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Emoji Icon'}),
             'type': forms.Select(attrs={'class': 'form-select'}),
             'color': forms.TextInput(attrs={'type':'color','class':'form-control','value':'#FFA500'}), 
+        }
+
+
+class TransactionForm(forms.ModelForm):
+    class Meta:
+        model = Transaction
+        fields = ['amount', 'type', 'account', 'category', 'note', 'date']
+        widgets = {
+            'amount': forms.NumberInput(attrs={'class':'form-control', 'step':'0.01', 'placeholder':'Amount'}),
+            'type': forms.Select(attrs={'class':'form-select'}),
+            'account': forms.Select(attrs={'class':'form-select'}),
+            'category': forms.Select(attrs={'class':'form-select'}),
+            'note': forms.TextInput(attrs={'class':'form-control', 'placeholder':'Note'}),
+            'date': forms.DateInput(attrs={'class':'form-control', 'type':'date'}),
         }

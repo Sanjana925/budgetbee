@@ -1,60 +1,82 @@
-<!-- finance/home.html -->
+
 {% extends 'finance/base.html' %}
 {% load static %}
 
 {% block title %}Home - Budget Bee{% endblock %}
 
 {% block extra_css %}
-<!-- Home & Transaction CSS -->
 <link rel="stylesheet" href="{% static 'css/home.css' %}">
 <link rel="stylesheet" href="{% static 'css/transaction.css' %}">
 {% endblock %}
 
 {% block content %}
 
-<!-- HOME DASHBOARD -->
 <div class="home-container">
 
     <!-- TOP SUMMARY -->
     <div class="summary-section">
-
-        <!-- LEFT: Income & Expense -->
         <div class="summary-left">
             <p>Total Income: <span class="amount">Rs. {{ total_income|default:"0.00" }}</span></p>
             <p>Total Expense: <span class="amount">Rs. {{ total_expense|default:"0.00" }}</span></p>
         </div>
-
-        <!-- RIGHT: Balance -->
         <div class="summary-right">
             <span class="balance-label">YOUR BALANCE</span>
             <h2 class="balance-amount">Rs. {{ balance|default:"0.00" }}</h2>
         </div>
-
     </div>
 
-    <!-- DIVIDER -->
     <hr class="summary-divider">
 
-    <!-- EMPTY STATE / MESSAGE -->
-    <div class="empty-state">
-        {% if request.user.is_authenticated %}
-            <p class="empty-title">“You haven’t added any transactions yet.”</p>
-            <p class="empty-subtitle">Add a transaction to get started.</p>
+    {% if request.user.is_authenticated %}
+        {% if transactions_by_date %}
+            <!-- TRANSACTIONS LIST -->
+            <div class="transactions-container" id="transactionsContainer">
+                {% for date, txs in transactions_by_date.items %}
+                <div class="date-card" data-date="{{ date }}">
+                    <div class="date-header">
+                        <span class="date-label">{{ date }}</span>
+                        <span class="summary">
+                            Income: Rs. {{ txs.total_income|default:"0.00" }} |
+                            Expense: Rs. {{ txs.total_expense|default:"0.00" }}
+                        </span>
+                    </div>
+                  <div class="transaction-list">
+    {% for tx in txs.items %}
+    <div class="transaction-item" data-id="{{ tx.id }}">
+        <span class="category"><i class="icon">{{ tx.category.icon }}</i> {{ tx.category.name }}</span>
+        <span class="amount {% if tx.type == 'income' %}income{% else %}expense{% endif %}">
+            {% if tx.type == 'income' %}+{% else %}-{% endif %} Rs. {{ tx.amount }}
+        </span>
+        <!-- EDIT & DELETE BUTTONS -->
+        <button class="edit-transaction" data-id="{{ tx.id }}">✏️</button>
+        <button class="delete-transaction" data-id="{{ tx.id }}">🗑️</button>
+    </div>
+    {% endfor %}
+</div>
+
+                </div>
+                {% endfor %}
+            </div>
         {% else %}
+            <div class="empty-state" id="emptyState">
+                <p class="empty-title">“You haven’t added any transactions yet.”</p>
+                <p class="empty-subtitle">Add a transaction to get started.</p>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
             <p class="empty-title">“Looks like you don’t have an account yet.”</p>
             <p class="empty-subtitle">Create an account to begin.</p>
-        {% endif %}
-    </div>
+        </div>
+    {% endif %}
 
     <!-- FLOATING ADD BUTTON -->
-  <div class="floating-add-wrapper">
-    {% if request.user.is_authenticated %}
-        <a href="javascript:void(0);" id="newTransactionBtn" class="floating-add-btn">+</a>
-    {% else %}
-        <a href="#" class="floating-add-btn" data-requires-auth>+</a>
-    {% endif %}
+   {% if request.user.is_authenticated %}
+<div class="floating-add-wrapper">
+    <a href="javascript:void(0);" id="newTransactionBtn" class="floating-add-btn">+</a>
     <span class="floating-add-label">New</span>
 </div>
+{% endif %}
 
 
 </div>
@@ -62,6 +84,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Transaction JS -->
 <script src="{% static 'js/transaction.js' %}"></script>
 {% endblock %}
