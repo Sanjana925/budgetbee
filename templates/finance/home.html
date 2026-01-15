@@ -1,4 +1,3 @@
-
 {% extends 'finance/base.html' %}
 {% load static %}
 
@@ -10,10 +9,9 @@
 {% endblock %}
 
 {% block content %}
-
 <div class="home-container">
 
-    <!-- TOP SUMMARY -->
+    <!-- Top Summary -->
     <div class="summary-section">
         <div class="summary-left">
             <p>Total Income: <span class="amount">Rs. {{ total_income|default:"0.00" }}</span></p>
@@ -29,7 +27,7 @@
 
     {% if request.user.is_authenticated %}
         {% if transactions_by_date %}
-            <!-- TRANSACTIONS LIST -->
+            <!-- Transactions List -->
             <div class="transactions-container" id="transactionsContainer">
                 {% for date, txs in transactions_by_date.items %}
                 <div class="date-card" data-date="{{ date }}">
@@ -40,47 +38,48 @@
                             Expense: Rs. {{ txs.total_expense|default:"0.00" }}
                         </span>
                     </div>
-                  <div class="transaction-list">
-    {% for tx in txs.items %}
-    <div class="transaction-item" data-id="{{ tx.id }}">
-        <span class="category"><i class="icon">{{ tx.category.icon }}</i> {{ tx.category.name }}</span>
-        <span class="amount {% if tx.type == 'income' %}income{% else %}expense{% endif %}">
-            {% if tx.type == 'income' %}+{% else %}-{% endif %} Rs. {{ tx.amount }}
-        </span>
-        <!-- EDIT & DELETE BUTTONS -->
-        <button class="edit-transaction" data-id="{{ tx.id }}">✏️</button>
-        <button class="delete-transaction" data-id="{{ tx.id }}">🗑️</button>
-    </div>
-    {% endfor %}
-</div>
-
+                    <div class="transaction-list">
+                        {% for tx in txs.items %}
+                        <div class="transaction-item" data-id="{{ tx.id }}">
+                            <span class="category">
+                                <i class="icon">{{ tx.category.icon }}</i> {{ tx.category.name }}
+                            </span>
+                            <span class="amount {% if tx.type == 'income' %}income{% else %}expense{% endif %}">
+                                {% if tx.type == 'income' %}+{% else %}-{% endif %} Rs. {{ tx.amount }}
+                            </span>
+                            <!-- Edit & Delete Buttons -->
+                            <button class="edit-transaction" data-id="{{ tx.id }}">✏️</button>
+                            <button class="delete-transaction" data-id="{{ tx.id }}">🗑️</button>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
                 {% endfor %}
             </div>
         {% else %}
+            <!-- Empty State -->
             <div class="empty-state" id="emptyState">
                 <p class="empty-title">“You haven’t added any transactions yet.”</p>
                 <p class="empty-subtitle">Add a transaction to get started.</p>
             </div>
         {% endif %}
     {% else %}
+        <!-- Guest Empty State -->
         <div class="empty-state">
             <p class="empty-title">“Looks like you don’t have an account yet.”</p>
             <p class="empty-subtitle">Create an account to begin.</p>
         </div>
     {% endif %}
 
-    <!-- FLOATING ADD BUTTON -->
-   {% if request.user.is_authenticated %}
-<div class="floating-add-wrapper">
-    <a href="javascript:void(0);" id="newTransactionBtn" class="floating-add-btn">+</a>
-    <span class="floating-add-label">New</span>
+    <!-- Floating Add Button -->
+    {% if request.user.is_authenticated %}
+    <div class="floating-add-wrapper">
+        <a href="javascript:void(0);" id="newTransactionBtn" class="floating-add-btn">+</a>
+        <span class="floating-add-label">New</span>
+    </div>
+    {% endif %}
+
 </div>
-{% endif %}
-
-
-</div>
-
 {% endblock %}
 
 {% block extra_js %}

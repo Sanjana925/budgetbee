@@ -18,26 +18,30 @@
         </div>
     </div>
 
-    <!-- Chart -->
+    <!-- Chart + Legend -->
     <div class="chart-card">
-        <canvas id="chartCanvas"></canvas>
+        <div class="chart-legend-container">
+            <canvas id="chartCanvas"></canvas>
+        </div>
         <p class="empty-text" id="chartEmpty">No data available</p>
     </div>
 
     <!-- Monthly Table -->
     <div class="table-card">
         <h3>Statistics</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Expense</th>
-                    <th>Income</th>
-                    <th>Balance</th>
-                </tr>
-            </thead>
-            <tbody id="monthlyTotalsBody"></tbody>
-        </table>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Expense</th>
+                        <th>Income</th>
+                        <th>Balance</th>
+                    </tr>
+                </thead>
+                <tbody id="monthlyTotalsBody"></tbody>
+            </table>
+        </div>
     </div>
 
 </div>
@@ -48,7 +52,7 @@
     const expenseData = JSON.parse('{{ expense_json|escapejs }}');
     const monthlyData = JSON.parse('{{ monthly_json|escapejs }}');
     const categoryColors = JSON.parse('{{ category_colors_json|escapejs }}');
-    const category_type = '{{ category_type|default:"expense" }}'; // Default
+    const category_type = '{{ category_type|default:"expense" }}';
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

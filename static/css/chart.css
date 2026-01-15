@@ -1,19 +1,19 @@
-/* Chart layout */
+/* Full page layout */
 .chart-container {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100%; /* fill center-column height */
+    gap: 15px;
     padding: 10px 20px;
 }
 
+/* Header: toggle buttons */
 .chart-header {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    margin-bottom: 20px;
 }
 
-/* Toggle buttons (category-style) */
 .toggle {
     display: flex;
     background: #eef1f7;
@@ -41,27 +41,57 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-.toggle-btn:hover {
-    background: white;
-    color: var(--color-primary);
-    font-weight: 600;
-    box-shadow: 0 1px 5px rgba(0,0,0,0.1);
-}
-
 /* Chart card */
 .chart-card {
+    flex: 1; /* smaller height */
     background: #fff;
     border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 30px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    position: relative;
 }
 
+/* Chart + legend container */
+.chart-legend-container {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 50px; /* gap between chart and legend */
+    width: 100%;
+    height: 100%;
+}
+
+/* Chart */
 canvas {
-    max-width: 100%;
-    height: 320px !important;
+    max-width: 50%;    /* chart smaller */
+    max-height: 250px; /* smaller chart height */
 }
 
+/* Category legend */
+.category-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.color-box {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+
+/* Empty chart message */
 .empty-text {
     text-align: center;
     color: #888;
@@ -71,28 +101,38 @@ canvas {
 
 /* Monthly table */
 .table-card {
+    flex: 1.5; /* bigger table */
     background: #fff;
     border-radius: 14px;
-    padding: 20px;
+    padding: 15px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
 }
 
 .table-card h3 {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
-.table-card table {
+.table-wrapper {
+    overflow-y: auto;
+    flex: 1; /* table fills remaining height */
+}
+
+.table-wrapper table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.table-card th,
-.table-card td {
+.table-wrapper th,
+.table-wrapper td {
     text-align: center;
     padding: 10px;
     border-bottom: 1px solid #eee;
 }
 
-.table-card th {
+.table-wrapper th {
     background: #f5f5f5;
+    position: sticky;
+    top: 0;
 }

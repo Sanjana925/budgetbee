@@ -1,3 +1,4 @@
+# Finance App Views
 from decimal import Decimal, InvalidOperation
 from collections import defaultdict
 from django.shortcuts import render, redirect, get_object_or_404
@@ -6,12 +7,15 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
-from .forms import AccountForm, CategoryForm
-from .forms import TransactionForm
+from .forms import AccountForm, CategoryForm, TransactionForm
 from .models import Account, Category, Transaction
 from .utils import get_user_or_guest, calculate_totals, prepare_chart_data
-from .constants import DEFAULT_ACCOUNTS, DEFAULT_ACCOUNT_ICONS, DEFAULT_CATEGORIES, DEFAULT_CATEGORY_ICONS, DEFAULT_CATEGORY_COLORS
+from .constants import (
+    DEFAULT_ACCOUNTS, DEFAULT_ACCOUNT_ICONS,
+    DEFAULT_CATEGORIES, DEFAULT_CATEGORY_ICONS, DEFAULT_CATEGORY_COLORS
+)
 from .signals import recalc_account_balance
+
 
 # ---------------------------
 # HOME DASHBOARD
@@ -21,7 +25,7 @@ def home(request):
     total_income, total_expense, total_balance = calculate_totals(user)
     accounts_list = Account.objects.filter(user=user) if user else []
 
-    # Transactions grouped by date
+    # Group transactions by date
     transactions_by_date = defaultdict(lambda: {"items": [], "total_income": 0, "total_expense": 0})
     if user:
         txs = Transaction.objects.filter(account__user=user).order_by('-date')
@@ -45,9 +49,8 @@ def home(request):
 
 
 # ---------------------------
-# ADD TRANSACTION (Modal + POST)
+# TRANSACTIONS CRUD
 # ---------------------------
-
 def add_transaction(request):
     user = get_user_or_guest(request.user)
     if not user:
@@ -76,10 +79,9 @@ def add_transaction(request):
                     "note": tx.note
                 }
             })
-        else:
-            return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
+        return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
 
-    # GET request → render modal
+    # GET → render modal
     accounts = Account.objects.filter(user=user)
     categories = Category.objects.filter(user=user)
     today = timezone.now().date()
@@ -89,9 +91,7 @@ def add_transaction(request):
         "today": today,
     })
 
-# ---------------------------
-# EDIT TRANSACTION
-# ---------------------------
+
 @login_required
 def edit_transaction(request, transaction_id):
     tx = get_object_or_404(Transaction, id=transaction_id, account__user=request.user)
@@ -119,10 +119,8 @@ def edit_transaction(request, transaction_id):
                     "note": tx.note
                 }
             })
-        else:
-            return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
+        return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
 
-    # GET request → render modal with pre-filled transaction
     accounts = Account.objects.filter(user=request.user)
     categories = Category.objects.filter(user=request.user)
     return render(request, 'finance/transaction.html', {
@@ -132,9 +130,7 @@ def edit_transaction(request, transaction_id):
         "today": tx.date,
     })
 
-# ---------------------------
-# DELETE TRANSACTION
-# ---------------------------
+
 @login_required
 def delete_transaction(request, transaction_id):
     tx = get_object_or_404(Transaction, id=transaction_id, account__user=request.user)
@@ -152,12 +148,11 @@ def delete_transaction(request, transaction_id):
 
 
 # ---------------------------
-# CHART VIEW
+# CHARTS
 # ---------------------------
 def chart(request):
     user = get_user_or_guest(request.user)
     chart_data = prepare_chart_data(user)
-
     return render(request, 'finance/chart.html', {
         'active': 'chart',
         'income_json': chart_data['income_json'],
@@ -231,13 +226,18 @@ def delete_category(request, category_id):
 # ---------------------------
 def accounts(request):
     user = get_user_or_guest(request.user)
-
     if user:
-        accounts_list = [{"id": a.id, "name": a.name, "balance": a.balance, "icon": a.icon} for a in Account.objects.filter(user=user)]
+        accounts_list = [
+            {"id": a.id, "name": a.name, "balance": a.balance, "icon": a.icon} 
+            for a in Account.objects.filter(user=user)
+        ]
         total_income, total_expense, total_balance = calculate_totals(user)
     else:
-        accounts_list = [{"id": i+1, "name": name, "balance": balance, "icon": icon} for i, (name, icon, balance) in enumerate(DEFAULT_ACCOUNTS)]
-        total_income, total_expense, total_balance = 0.0, 0.0, 0.0
+        accounts_list = [
+            {"id": i+1, "name": name, "balance": balance, "icon": icon} 
+            for i, (name, icon, balance) in enumerate(DEFAULT_ACCOUNTS)
+        ]
+        total_income = total_expense = total_balance = 0.0
 
     return render(request, 'finance/accounts.html', {
         "active": "accounts",
@@ -262,7 +262,11 @@ def add_account(request):
             return JsonResponse({"success": False, "error": "Invalid initial amount"}, status=400)
         if not name:
             return JsonResponse({"success": False, "error": "Account name required"})
-        account = Account.objects.create(user=request.user, name=name, initial_amount=initial_amount, balance=initial_amount, icon=icon)
+        Account.objects.create(
+            user=request.user, name=name,
+            initial_amount=initial_amount, balance=initial_amount,
+            icon=icon
+        )
         return JsonResponse({"success": True})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 

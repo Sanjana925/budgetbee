@@ -1,3 +1,4 @@
+<!-- Transaction Modal: Add/Edit -->
 <div id="transactionModal" class="modal-overlay">
     <div class="modal-card">
         <h3>{% if transaction %}Edit{% else %}Add{% endif %} Transaction</h3>
@@ -5,10 +6,18 @@
         <form method="POST" id="transactionForm">
             {% csrf_token %}
 
-            <!-- ================= Type Toggle ================= -->
+            <!-- Type Toggle -->
             <div class="type-toggle">
-                <button type="button" class="toggle-btn {% if transaction.type == 'income' %}active{% endif %}" data-type="income">Income</button>
-                <button type="button" class="toggle-btn {% if transaction.type == 'expense' %}active{% endif %}" data-type="expense">Expense</button>
+                <button type="button"
+                        class="toggle-btn {% if transaction.type == 'income' %}active{% endif %}"
+                        data-type="income">
+                    Income
+                </button>
+                <button type="button"
+                        class="toggle-btn {% if transaction.type == 'expense' %}active{% endif %}"
+                        data-type="expense">
+                    Expense
+                </button>
                 <input type="hidden" name="type" id="typeInput" value="{{ transaction.type|default:'income' }}">
             </div>
 

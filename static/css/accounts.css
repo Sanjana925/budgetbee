@@ -18,7 +18,7 @@
 
 /* Scrollable accounts list */
 .accounts-cards-container {
-    max-height: 400px;
+    max-height: 380px;
     overflow-y: auto;
     margin-bottom: 20px;
 }
@@ -55,15 +55,8 @@
     cursor: pointer;
 }
 
-.edit-btn {
-    background-color: #5667FF;
-    color: #fff;
-}
-
-.delete-btn {
-    background-color: #FF5656;
-    color: #fff;
-}
+.edit-btn { background-color: #5667FF; color: #fff; }
+.delete-btn { background-color: #FF5656; color: #fff; }
 
 /* Add account button */
 .add-account-btn {
@@ -143,10 +136,7 @@
     font-size: 28px;
 }
 
-.icon-box input {
-    display: none;
-}
-
+.icon-box input { display: none; }
 .icon-box input:checked + .icon {
     border: 2px solid #007bff;
     border-radius: 8px;
@@ -159,20 +149,9 @@
     gap: 10px;
 }
 
-#cancelPopup,
-#cancelDelete {
-    background-color: #ccc;
-    color: #333;
-}
-
-#confirmDelete {
-    background-color: #FF3B3B;
-    color: white;
-}
-
-#confirmDelete:hover {
-    background-color: #e63232;
-}
+#cancelPopup, #cancelDelete { background-color: #ccc; color: #333; }
+#confirmDelete { background-color: #FF3B3B; color: white; }
+#confirmDelete:hover { background-color: #e63232; }
 
 /* Scrollbar styling */
 .accounts-cards-container::-webkit-scrollbar {
@@ -184,21 +163,14 @@
     border-radius: 3px;
 }
 
-.accounts-cards-container::-webkit-scrollbar-track {
-    background: transparent;
-}
+.accounts-cards-container::-webkit-scrollbar-track { background: transparent; }
 
 /* Responsive adjustments */
-@media (max-width:768px) {
-    .accounts-summary {
-        flex-direction: column;
-    }
-
-    .accounts-cards {
-        gap: 10px;
-    }
-
-    .popup-card {
-        width: 90%;
-    }
+@media (max-width:768px){
+    .accounts-summary { flex-direction: column; }
+    .accounts-cards { gap: 10px; }
+    .popup-card { width: 90%; }
+}
+.account-icon {
+    font-size: 28px;
 }

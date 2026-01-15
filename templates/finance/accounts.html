@@ -9,9 +9,9 @@
 
 {% block content %}
 
-<h1>Accounts Page</h1>
+<h1>Accounts</h1>
 
-<!-- ================= Summary Cards ================= -->
+<!-- Summary Cards -->
 <div class="accounts-summary">
     <div class="summary-card">
         <div>Total Balance</div>
@@ -27,14 +27,19 @@
     </div>
 </div>
 
-<!-- ================= Scrollable Accounts ================= -->
+<!-- Scrollable Accounts List -->
 <div class="accounts-cards-container">
     <div class="accounts-cards">
         {% for account in user_accounts %}
         <div class="account-card" data-id="{{ account.id }}">
-            <div class="account-info">
-                <div class="account-name">{{ account.name }}</div>
-                <div class="account-balance">Balance Rs {{ account.balance|floatformat:2 }}</div>
+            <div class="account-info" style="display: flex; align-items: center; gap: 12px;">
+                <!-- Icon -->
+                <div class="account-icon">{{ account.icon }}</div>
+
+                <div>
+                    <div class="account-name">{{ account.name }}</div>
+                    <div class="account-balance">Balance Rs {{ account.balance|floatformat:2 }}</div>
+                </div>
             </div>
 
             {% if request.user.is_authenticated %}
@@ -61,7 +66,7 @@
     </div>
 </div>
 
-<!-- ================= Add Account Button ================= -->
+<!-- Add Account Button -->
 <div class="add-account-btn">
     {% if request.user.is_authenticated %}
         <button id="openAddAccount">+ Add Account</button>
@@ -70,8 +75,8 @@
     {% endif %}
 </div>
 
-<!-- ================= Add / Edit Popup (AUTH ONLY) ================= -->
 {% if request.user.is_authenticated %}
+<!-- Add / Edit Popup -->
 <div class="popup-overlay hidden" id="popupOverlay">
     <div class="popup-card">
         <h3 id="popupTitle">Add New Account</h3>
@@ -103,7 +108,7 @@
     </div>
 </div>
 
-<!-- ================= Delete Popup ================= -->
+<!-- Delete Popup -->
 <div class="popup-overlay hidden" id="deleteOverlay">
     <div class="popup-card">
         <h3>Delete Account</h3>
@@ -120,7 +125,7 @@
 </div>
 {% endif %}
 
-<!-- ================= JS Data ================= -->
+<!-- JS Data for accounts.js -->
 <div id="accountsData"
      data-add-url="{% url 'finance:add_account' %}"
      data-edit-url="{% url 'finance:edit_account' 0 %}"

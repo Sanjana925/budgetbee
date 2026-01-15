@@ -1,9 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
+
+    // Open "New Transaction" modal
     const btn = document.getElementById("newTransactionBtn");
     if (btn) btn.addEventListener("click", () => openModal());
 
-    // Delegated click for edit/delete buttons and type toggle
+    // Delegated click handling
     document.body.addEventListener("click", function (e) {
+
         // ---------- Edit transaction ----------
         if (e.target.matches(".edit-transaction")) {
             const txId = e.target.dataset.id;
@@ -82,12 +85,10 @@ function openModal(txId = null) {
                     btn.classList.toggle("active", btnType === defaultType);
                 });
 
-                // Filter categories
                 Array.from(categorySelect.options).forEach(opt => {
                     opt.style.display = opt.dataset.type === defaultType ? "" : "none";
                 });
 
-                // Select first visible category automatically
                 const firstVisible = Array.from(categorySelect.options).find(o => o.style.display !== "none");
                 if (firstVisible) categorySelect.value = firstVisible.value;
             }
@@ -199,7 +200,6 @@ function updateTransactionList(tx) {
     }
 
     const list = dateCard.querySelector(".transaction-list");
-
     let txItem = list.querySelector(`[data-id="${tx.id}"]`);
     if (!txItem) {
         txItem = document.createElement("div");
@@ -222,14 +222,17 @@ function updateTransactionList(tx) {
 // ---------------- Update Date Summary ----------------
 function updateDateSummary(dateCard) {
     if (!dateCard) return;
+
     const items = dateCard.querySelectorAll(".transaction-item");
     let income = 0, expense = 0;
 
     items.forEach(item => {
         const amtElem = item.querySelector(".amount");
         if (!amtElem) return;
+
         const amtText = amtElem.textContent.replace(/[^\d.]/g, "");
         const amt = parseFloat(amtText) || 0;
+
         if (amtElem.classList.contains("income")) income += amt;
         else expense += amt;
     });
@@ -245,6 +248,7 @@ function updateTopSummary(data) {
         amounts[0].innerText = "Rs. " + parseFloat(data.total_income || 0).toFixed(2);
         amounts[1].innerText = "Rs. " + parseFloat(data.total_expense || 0).toFixed(2);
     }
+
     const balanceElem = document.querySelector(".summary-right .balance-amount");
     if (balanceElem) {
         balanceElem.innerText = "Rs. " + parseFloat(data.balance || 0).toFixed(2);

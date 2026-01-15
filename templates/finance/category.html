@@ -10,7 +10,7 @@
 {% block content %}
 <div class="category-container">
 
-    <!-- HEADER: Toggle + Add -->
+    <!-- Header: Type Toggle + Add Button -->
     <div class="category-header">
         <div class="toggle">
             <a href="?type=expense" class="toggle-btn {% if category_type == 'expense' %}active{% endif %}">Expense</a>
@@ -18,15 +18,13 @@
         </div>
 
         {% if request.user.is_authenticated %}
-            <!-- Logged-in: show popup -->
             <button id="openAddCategory" class="add-btn" data-current-type="{{ category_type }}">+</button>
         {% else %}
-            <!-- Guest: trigger global login popup -->
             <button class="add-btn" data-requires-auth>+</button>
         {% endif %}
     </div>
 
-    <!-- CATEGORY LIST -->
+    <!-- Category List -->
     <div class="category-list">
         {% for cat in categories %}
         <div class="category-item" style="--cat-color: {{ cat.color }}">
@@ -52,9 +50,10 @@
         <p class="empty-text">No categories found.</p>
         {% endfor %}
     </div>
+
 </div>
 
-<!-- ================= Add/Edit Category Popup (AUTH ONLY) ================= -->
+<!-- Add / Edit Category Popup (Auth Only) -->
 {% if request.user.is_authenticated %}
 <div class="popup-overlay hidden" id="categoryPopup">
     <div class="popup-card">
@@ -94,7 +93,7 @@
     </div>
 </div>
 
-<!-- ================= Delete Category Popup ================= -->
+<!-- Delete Category Popup -->
 <div class="popup-overlay hidden" id="deleteCategoryPopup">
     <div class="popup-card">
         <h3>Delete Category</h3>
@@ -110,6 +109,7 @@
 </div>
 {% endif %}
 
+<!-- JS Data for Category -->
 {% if request.user.is_authenticated %}
 <div id="categoriesData"
      data-is-authenticated="true"
