@@ -1,68 +1,46 @@
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 100vw;
+    position: fixed; top:0; left:0; width:100vw; height:100vh;
     background: rgba(0,0,0,0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    animation: fadeIn 0.2s ease;
+    display:flex; justify-content:center; align-items:center; z-index:9999;
 }
 
 .modal-card {
-    width: 420px;
-    max-width: 90%;
-    background: white;
-    border-radius: 14px;
-    padding: 25px;
+    width:420px; max-width:90%;
+    background:#fff; border-radius:14px; padding:25px;
+    display:flex; flex-direction:column; gap:14px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.15);
+}
+
+.modal-card h3 { text-align:center; margin:0; }
+.modal-card input, .modal-card select { width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; font-size:14px; }
+.modal-actions { display:flex; justify-content:space-between; margin-top:10px; }
+.modal-actions button:first-child { background:#f0f0f0; }
+.modal-actions button:last-child { background:var(--color-primary); color:white; }
+body.modal-open { overflow:hidden; }
+
+/* ================= Sliding Type Toggle ================= */
+.type-toggle {
     display: flex;
-    flex-direction: column;
-    gap: 14px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    gap: 4px;
+    margin-bottom: 12px;
+    border-radius: 20px;
+    background: #eef1f7;
+    padding: 4px;
 }
 
-.modal-card h3 {
-    margin: 0;
-    text-align: center;
-}
-
-.modal-card input,
-.modal-card select {
-    width: 100%;
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    font-size: 14px;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-}
-
-.modal-actions button {
-    padding: 8px 18px;
-    border-radius: 8px;
+.type-toggle .toggle-btn {
+    flex: 1;
+    padding: 6px 12px;
+    border-radius: 16px;
     border: none;
+    background: transparent;
     cursor: pointer;
-    transition: background 0.2s ease;
+    font-weight: 500;
+    transition: all 0.2s;
 }
 
-.modal-actions button:first-child { background: #f0f0f0; }
-.modal-actions button:last-child { background: var(--color-primary); color: white; }
-.modal-actions button:last-child:hover { background: #0056b3; }
-
-body.modal-open { overflow: hidden; }
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@media (max-width: 500px) {
-    .modal-card { width: 95%; padding: 20px; }
+.type-toggle .toggle-btn.active {
+    background: white;
+    color: var(--color-primary);
+    font-weight: 600;
 }

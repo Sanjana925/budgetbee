@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const btn = document.getElementById("newTransactionBtn");
     if (btn) btn.addEventListener("click", () => openModal());
 
-    // Delegated click for edit/delete buttons
+    // Delegated click for edit/delete buttons and modal type toggle
     document.body.addEventListener("click", function (e) {
         if (e.target.matches(".edit-transaction")) {
             const txId = e.target.dataset.id;
@@ -11,6 +11,33 @@ document.addEventListener("DOMContentLoaded", function () {
         if (e.target.matches(".delete-transaction")) {
             const txId = e.target.dataset.id;
             deleteTransaction(txId);
+        }
+
+        // ================= Type Toggle Buttons =================
+        if (e.target.matches(".type-toggle .toggle-btn")) {
+            const btn = e.target;
+            const type = btn.dataset.type;
+
+            // Activate button
+            btn.parentElement.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            // Update hidden input for form submission
+            const typeInput = document.getElementById("typeInput");
+            if (typeInput) typeInput.value = type;
+
+            // Filter category dropdown based on type
+            const categorySelect = document.getElementById("categorySelect");
+            if (categorySelect) {
+                Array.from(categorySelect.options).forEach(opt => {
+                    if (opt.dataset.type === type) opt.style.display = "";
+                    else opt.style.display = "none";
+                });
+
+                // Select first visible category automatically
+                const firstVisible = Array.from(categorySelect.options).find(o => o.style.display !== "none");
+                if (firstVisible) categorySelect.value = firstVisible.value;
+            }
         }
     });
 });
@@ -44,6 +71,10 @@ function openModal(txId = null) {
 
             const form = document.getElementById("transactionForm");
             if (!form) return;
+
+            // Trigger initial toggle to filter categories
+            const activeBtn = document.querySelector(".type-toggle .toggle-btn.active");
+            if (activeBtn) activeBtn.click();
 
             form.addEventListener("submit", function (e) {
                 e.preventDefault();
@@ -96,16 +127,12 @@ function deleteTransaction(txId) {
             if (txItem) {
                 const dateCard = txItem.closest(".date-card");
                 txItem.remove();
-
-                // Remove date card if empty
                 if (dateCard && dateCard.querySelectorAll(".transaction-item").length === 0) {
                     dateCard.remove();
                 }
-
                 updateTopSummary(res);
             }
 
-            // Show empty state if no transactions
             const container = document.getElementById("transactionsContainer");
             const emptyState = document.getElementById("emptyState");
             if (container && container.children.length === 0 && emptyState) {
@@ -140,14 +167,12 @@ function updateTransactionList(tx) {
     const emptyState = document.getElementById("emptyState");
     if (emptyState) emptyState.style.display = "none";
 
-    // Check if date card exists
     let dateCard = container.querySelector(`[data-date="${tx.date}"]`);
     if (!dateCard) {
         dateCard = document.createElement("div");
         dateCard.classList.add("date-card");
         dateCard.dataset.date = tx.date;
 
-        // Plain date displayed
         dateCard.innerHTML = `
             <div class="date-header">
                 <span class="date-label">${tx.date}</span>
@@ -156,7 +181,6 @@ function updateTransactionList(tx) {
             <div class="transaction-list"></div>
         `;
 
-        // Insert newest date at top
         const existingCards = Array.from(container.querySelectorAll(".date-card"));
         const inserted = existingCards.find(c => new Date(c.dataset.date) < new Date(tx.date));
         if (inserted) container.insertBefore(dateCard, inserted);
@@ -170,7 +194,7 @@ function updateTransactionList(tx) {
         txItem = document.createElement("div");
         txItem.classList.add("transaction-item");
         txItem.dataset.id = tx.id;
-        list.insertBefore(txItem, list.firstChild); // newest first
+        list.insertBefore(txItem, list.firstChild);
     }
 
     txItem.innerHTML = `
