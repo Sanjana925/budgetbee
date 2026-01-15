@@ -2,36 +2,38 @@ document.addEventListener("DOMContentLoaded", function () {
     const btn = document.getElementById("newTransactionBtn");
     if (btn) btn.addEventListener("click", () => openModal());
 
-    // Delegated click for edit/delete buttons and modal type toggle
+    // Delegated click for edit/delete buttons and type toggle
     document.body.addEventListener("click", function (e) {
+        // ---------- Edit transaction ----------
         if (e.target.matches(".edit-transaction")) {
             const txId = e.target.dataset.id;
             openModal(txId);
         }
+
+        // ---------- Delete transaction ----------
         if (e.target.matches(".delete-transaction")) {
             const txId = e.target.dataset.id;
             deleteTransaction(txId);
         }
 
-        // ================= Type Toggle Buttons =================
+        // ---------- Type toggle (Income/Expense) ----------
         if (e.target.matches(".type-toggle .toggle-btn")) {
             const btn = e.target;
             const type = btn.dataset.type;
 
-            // Activate button
+            // Activate clicked button
             btn.parentElement.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
 
-            // Update hidden input for form submission
+            // Update hidden input
             const typeInput = document.getElementById("typeInput");
             if (typeInput) typeInput.value = type;
 
-            // Filter category dropdown based on type
+            // Filter category dropdown
             const categorySelect = document.getElementById("categorySelect");
             if (categorySelect) {
                 Array.from(categorySelect.options).forEach(opt => {
-                    if (opt.dataset.type === type) opt.style.display = "";
-                    else opt.style.display = "none";
+                    opt.style.display = opt.dataset.type === type ? "" : "none";
                 });
 
                 // Select first visible category automatically
@@ -42,9 +44,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-// ----------------------
-// CSRF Helper
-// ----------------------
+// ---------------- CSRF Helper ----------------
 function getCSRFToken() {
     const name = "csrftoken";
     const cookies = document.cookie.split(";").map(c => c.trim());
@@ -54,9 +54,7 @@ function getCSRFToken() {
     return null;
 }
 
-// ----------------------
-// OPEN MODAL
-// ----------------------
+// ---------------- Open Modal ----------------
 function openModal(txId = null) {
     closeModal();
 
@@ -72,10 +70,29 @@ function openModal(txId = null) {
             const form = document.getElementById("transactionForm");
             if (!form) return;
 
-            // Trigger initial toggle to filter categories
-            const activeBtn = document.querySelector(".type-toggle .toggle-btn.active");
-            if (activeBtn) activeBtn.click();
+            // ---------- Set default type toggle and filter categories ----------
+            const typeInput = document.getElementById("typeInput");
+            const categorySelect = document.getElementById("categorySelect");
+            if (typeInput && categorySelect) {
+                const defaultType = typeInput.value || "income";
+                const toggleBtns = document.querySelectorAll(".type-toggle .toggle-btn");
 
+                toggleBtns.forEach(btn => {
+                    const btnType = btn.dataset.type;
+                    btn.classList.toggle("active", btnType === defaultType);
+                });
+
+                // Filter categories
+                Array.from(categorySelect.options).forEach(opt => {
+                    opt.style.display = opt.dataset.type === defaultType ? "" : "none";
+                });
+
+                // Select first visible category automatically
+                const firstVisible = Array.from(categorySelect.options).find(o => o.style.display !== "none");
+                if (firstVisible) categorySelect.value = firstVisible.value;
+            }
+
+            // ---------- Form submit ----------
             form.addEventListener("submit", function (e) {
                 e.preventDefault();
                 const data = new FormData(form);
@@ -107,9 +124,7 @@ function openModal(txId = null) {
         .catch(err => console.error("Failed to load modal:", err));
 }
 
-// ----------------------
-// DELETE TRANSACTION
-// ----------------------
+// ---------------- Delete Transaction ----------------
 function deleteTransaction(txId) {
     if (!confirm("Are you sure you want to delete this transaction?")) return;
 
@@ -146,18 +161,14 @@ function deleteTransaction(txId) {
     .catch(err => console.error("Error deleting transaction:", err));
 }
 
-// ----------------------
-// CLOSE MODAL
-// ----------------------
+// ---------------- Close Modal ----------------
 function closeModal() {
     const modal = document.getElementById("transactionModal");
     if (modal) modal.remove();
     document.body.classList.remove("modal-open");
 }
 
-// ----------------------
-// UPDATE TRANSACTION LIST
-// ----------------------
+// ---------------- Update Transaction List ----------------
 function updateTransactionList(tx) {
     if (!tx || !tx.date) return;
 
@@ -208,9 +219,7 @@ function updateTransactionList(tx) {
     updateTopSummary(tx);
 }
 
-// ----------------------
-// UPDATE DATE SUMMARY
-// ----------------------
+// ---------------- Update Date Summary ----------------
 function updateDateSummary(dateCard) {
     if (!dateCard) return;
     const items = dateCard.querySelectorAll(".transaction-item");
@@ -229,9 +238,7 @@ function updateDateSummary(dateCard) {
     if (summary) summary.textContent = `Income: Rs. ${income.toFixed(2)} | Expense: Rs. ${expense.toFixed(2)}`;
 }
 
-// ----------------------
-// UPDATE TOP SUMMARY
-// ----------------------
+// ---------------- Update Top Summary ----------------
 function updateTopSummary(data) {
     const amounts = document.querySelectorAll(".summary-left .amount");
     if (amounts.length >= 2) {

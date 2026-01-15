@@ -1,16 +1,19 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+    // Get categories container and check authentication
     const categoriesData = document.getElementById('categoriesData');
     if (!categoriesData) return;
 
     const IS_AUTH = categoriesData.dataset.isAuthenticated === 'true';
     if (!IS_AUTH) return; // Guest users do nothing
 
+    // URLs and default type
     const ADD_URL = categoriesData.dataset.addUrl;
     const EDIT_URL_TEMPLATE = categoriesData.dataset.editUrl;
     const DELETE_URL_TEMPLATE = categoriesData.dataset.deleteUrl;
     const CURRENT_TYPE = categoriesData.dataset.currentType || 'expense';
 
+    // DOM elements
     const overlay = document.getElementById('categoryPopup');
     const deleteOverlay = document.getElementById('deleteCategoryPopup');
     const form = document.getElementById('categoryForm');
@@ -21,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const iconRadios = document.querySelectorAll('input[name="icon"]');
     const colorRadios = document.querySelectorAll('input[name="color"]');
 
-    // ================= Apply colors to span =================
+    // Apply colors to span elements
     document.querySelectorAll('.color-box').forEach(box => {
         const span = box.querySelector('span');
         const bg = box.style.getPropertyValue('--bg-color');
@@ -40,12 +43,9 @@ document.addEventListener("DOMContentLoaded", () => {
         form.action = ADD_URL;
         nameInput.value = "";
 
-        // ✅ Set the type automatically based on toggle
         if (typeInput) typeInput.value = CURRENT_TYPE;
 
         iconRadios.forEach(r => r.checked = false);
-
-        // Reset colors: select first color by default
         colorRadios.forEach((r, i) => r.checked = i === 0);
 
         overlay.classList.remove('hidden');
@@ -62,11 +62,8 @@ document.addEventListener("DOMContentLoaded", () => {
             nameInput.value = btn.dataset.name || "";
 
             iconRadios.forEach(r => r.checked = r.value === btn.dataset.icon);
-
-            // Highlight the current color
             colorRadios.forEach(r => r.checked = r.value === btn.dataset.color);
 
-            // ✅ Set the type from data-type attribute
             if (typeInput) typeInput.value = btn.dataset.type || CURRENT_TYPE;
 
             overlay.classList.remove('hidden');
@@ -86,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Submit add/edit
+    // Submit Add/Edit
     form?.addEventListener('submit', async e => {
         e.preventDefault();
         try {
@@ -103,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Submit delete
+    // Submit Delete
     deleteForm?.addEventListener('submit', async e => {
         e.preventDefault();
         try {

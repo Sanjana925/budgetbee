@@ -2,13 +2,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     console.log("✅ global.js loaded");
 
+    // Check authentication from body dataset
     const isAuthenticated = document.body.dataset.auth === "true";
     console.log("🔐 isAuthenticated:", isAuthenticated);
 
+    // Elements that require authentication
     const authElements = document.querySelectorAll("[data-requires-auth]");
     console.log("🔎 data-requires-auth elements found:", authElements.length);
 
-    // All buttons or links that require login
+    // Attach click handlers to auth elements
     authElements.forEach(el => {
         console.log("➕ auth element:", el);
 
@@ -22,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.log("📦 loginRequiredModal found:", modal);
 
                 if (modal) {
-                    modal.classList.remove("hidden"); // show popup
+                    modal.classList.remove("hidden"); // show login popup
                     console.log("👀 popup shown");
                 } else {
                     console.log("❌ popup NOT found");
@@ -31,14 +33,14 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Close button inside popup
+    // Close button inside login popup
     const closeBtn = document.getElementById("closeLoginModal");
     console.log("❎ closeLoginModal found:", closeBtn);
 
     if (closeBtn) {
         closeBtn.addEventListener("click", function () {
             const modal = document.getElementById("loginRequiredModal");
-            if (modal) modal.classList.add("hidden");
+            if (modal) modal.classList.add("hidden"); // hide popup
         });
     }
 
@@ -48,9 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (modal) {
         modal.addEventListener("click", function (e) {
-            if (e.target === modal) {
-                modal.classList.add("hidden");
-            }
+            if (e.target === modal) modal.classList.add("hidden");
         });
     }
 

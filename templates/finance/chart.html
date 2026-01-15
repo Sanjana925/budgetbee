@@ -1,25 +1,30 @@
-
 {% extends "finance/base.html" %}
 {% load static %}
 
 {% block title %}Charts - Budget Bee{% endblock %}
 
-{% block content %}
-<div class="chart-page">
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/chart.css' %}">
+{% endblock %}
 
-    <!-- Toggle Buttons -->
-    <div class="toggle">
-        <button id="expenseBtn" class="active">Expenses</button>
-        <button id="incomeBtn">Income</button>
+{% block content %}
+<div class="chart-container">
+
+    <!-- HEADER: Toggle -->
+    <div class="chart-header">
+        <div class="toggle">
+            <a href="#" class="toggle-btn" data-type="expense">Expense</a>
+            <a href="#" class="toggle-btn" data-type="income">Income</a>
+        </div>
     </div>
 
-    <!-- Chart Card -->
+    <!-- Chart -->
     <div class="chart-card">
         <canvas id="chartCanvas"></canvas>
         <p class="empty-text" id="chartEmpty">No data available</p>
     </div>
 
-    <!-- Monthly Statistics Table -->
+    <!-- Monthly Table -->
     <div class="table-card">
         <h3>Statistics</h3>
         <table>
@@ -31,21 +36,21 @@
                     <th>Balance</th>
                 </tr>
             </thead>
-            <tbody id="monthlyTotalsBody">
-                <!-- JS will populate rows -->
-            </tbody>
+            <tbody id="monthlyTotalsBody"></tbody>
         </table>
     </div>
 
 </div>
 
+<!-- Pass data from Django -->
 <script>
     const incomeData = JSON.parse('{{ income_json|escapejs }}');
     const expenseData = JSON.parse('{{ expense_json|escapejs }}');
-    const monthlyData = JSON.parse('{{ monthly_json|escapejs }}'); // must be prepared in view
+    const monthlyData = JSON.parse('{{ monthly_json|escapejs }}');
+    const categoryColors = JSON.parse('{{ category_colors_json|escapejs }}');
+    const category_type = '{{ category_type|default:"expense" }}'; // Default
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{% static 'finance/js/chart.js' %}"></script>
-<script src="{% static 'finance/js/toggle.js' %}"></script>
+<script src="{% static 'js/chart.js' %}"></script>
 {% endblock %}

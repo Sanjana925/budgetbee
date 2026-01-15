@@ -1,125 +1,98 @@
-/* ===============================
-   HOME PAGE MAIN CONTAINER
-   =============================== */
-
-/* This wraps the entire home page content */
+/* Home page main container */
 .home-container {
-    height: 100%;                 /* Fill available center column height */
-    width: 100%;                  /* Take full width of center column */
-    display: flex;                /* Enable flexible layout */
-    flex-direction: column;       /* Stack children vertically */
-    position: relative;           /* Needed for floating + button positioning */
-       padding-top: 20px; /* <-- ADD this line for top spacing */
-}
-
-/* ===============================
-   TOP SUMMARY SECTION
-   =============================== */
-
-/* Container for income, expense & balance */
-.summary-section {
-    display: flex;                /* Place left & right side horizontally */
-    justify-content: space-between; /* Push items to opposite ends */
-    align-items: center;          /* Vertically align items */
-    padding: 10px 20px;           /* Space inside the box */
-}
-
-/* LEFT SIDE: Income & Expense */
-.summary-left {
-    display: flex;                /* Vertical stacking */
+    height: 100%;
+    width: 100%;
+    display: flex;
     flex-direction: column;
-    gap: 6px;                     /* Space between income & expense */
+    position: relative;
+    padding-top: 20px;
 }
 
-/* Text style for income & expense */
+/* Top summary section */
+.summary-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+}
+
+/* Left side: income & expense */
+.summary-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
 .summary-text {
-    font-size: 14px;              /* Small text like in image */
-    color: var(--color-subtitle); /* Soft gray color */
+    font-size: 14px;
+    color: var(--color-subtitle);
     margin: 0;
 }
 
-/* Highlight amount numbers */
 .summary-text .amount {
-    font-weight: 600;             /* Slightly bold */
-    color: var(--color-text);     /* Darker for readability */
+    font-weight: 600;
+    color: var(--color-text);
 }
 
-/* RIGHT SIDE: Balance */
+/* Right side: balance */
 .summary-right {
-    text-align: right;            /* Align text to the right */
+    text-align: right;
 }
 
-/* Small label above balance */
 .balance-label {
-    font-size: 12px;              /* Small uppercase text */
+    font-size: 12px;
     color: var(--color-subtitle);
-    letter-spacing: 1px;          /* Spaced letters for modern look */
+    letter-spacing: 1px;
 }
 
-/* Balance amount */
 .balance-amount {
     margin: 4px 0 0 0;
-    font-size: 22px;              /* Bigger number */
+    font-size: 22px;
     font-family: var(--font-header);
     color: var(--color-heading);
 }
 
-/* ===============================
-   DIVIDER LINE
-   =============================== */
-
-/* Thin horizontal line under summary */
+/* Divider line */
 .summary-divider {
-    border: none;                 /* Remove default border */
-    border-top: 1px solid #dcdcdc;/* Light gray line */
-    margin: 10px 0;               /* Space above & below */
+    border: none;
+    border-top: 1px solid #dcdcdc;
+    margin: 10px 0;
 }
 
-/* ===============================
-   EMPTY STATE MESSAGE
-   =============================== */
-
-/* Centered empty state container */
+/* Empty state message */
 .empty-state {
-    flex: 1;                      /* Take remaining vertical space */
+    flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;      /* Vertically center content */
-    align-items: center;          /* Horizontally center content */
+    justify-content: center;
+    align-items: center;
     text-align: center;
-    gap: 8px;                     /* Space between lines */
-
+    gap: 8px;
 }
 
-/* Main empty message */
 .empty-title {
     font-size: 14px;
     color: var(--color-subtitle);
     margin: 0;
-    font-style: italic;           /* Quoted style like image */
+    font-style: italic;
 }
 
-/* Sub text under main message */
 .empty-subtitle {
     font-size: 13px;
-    color: var(--color-primary);  /* Blue accent */
+    color: var(--color-primary);
     margin: 0;
 }
 
-/* ===============================
-   FLOATING ADD BUTTON
-   =============================== */
-/* Wrapper for button + label */
+/* Floating add button */
 .floating-add-wrapper {
     position: absolute;
     bottom: 20px;
     right: 20px;
     display: flex;
     align-items: center;
-    gap: 10px; /* Space between button and label */
+    gap: 10px;
 }
 
-/* Circular + button */
 .floating-add-btn {
     width: 50px;
     height: 50px;
@@ -139,7 +112,6 @@
     transform: scale(1.05);
 }
 
-/* Label text next to button */
 .floating-add-label {
     font-size: 24px;
     font-weight: 600;
@@ -147,8 +119,9 @@
     cursor: pointer;
 }
 
+/* Transactions container */
 .transactions-container {
-    max-height: 500px;  /* scrollable height */
+    max-height: 500px;
     overflow-y: auto;
     margin: 10px 20px 80px 20px;
     padding-right: 5px;
@@ -186,6 +159,7 @@
     border-bottom: none;
 }
 
+/* Amount colors */
 .amount.income {
     color: green;
 }
@@ -194,6 +168,7 @@
     color: red;
 }
 
+/* Category icon spacing */
 .category .icon {
     margin-right: 6px;
 }

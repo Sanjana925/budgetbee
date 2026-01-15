@@ -1,6 +1,6 @@
-// password_modal.js
-
 document.addEventListener("DOMContentLoaded", function () {
+
+    // Get modal and buttons
     const modal = document.getElementById('password-modal');
     const btn = document.getElementById('open-password-modal');
     const closeBtn = document.querySelector('.modal .close');
@@ -15,10 +15,11 @@ document.addEventListener("DOMContentLoaded", function () {
         modal.style.display = 'none';
     };
 
-    // Close modal if clicked outside content
+    // Close modal when clicking outside content
     window.onclick = (event) => {
-        if (event.target == modal) {
+        if (event.target === modal) {
             modal.style.display = 'none';
         }
     };
+
 });

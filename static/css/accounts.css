@@ -1,10 +1,10 @@
-/* ================= Summary Cards ================= */
-
+/* Summary cards section */
 .accounts-summary {
     display: flex;
     gap: 15px;
     margin-bottom: 20px;
 }
+
 .summary-card {
     flex: 1;
     background-color: var(--color-white);
@@ -16,17 +16,19 @@
     box-shadow: 0 3px 8px rgba(0,0,0,0.15);
 }
 
-/* ================= Scrollable Accounts ================= */
+/* Scrollable accounts list */
 .accounts-cards-container {
     max-height: 400px;
     overflow-y: auto;
     margin-bottom: 20px;
 }
+
 .accounts-cards {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
+
 .account-card {
     display: flex;
     justify-content: space-between;
@@ -38,12 +40,13 @@
     font-size: 18px;
     transition: 0.3s;
 }
+
 .account-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 5px 12px rgba(0,0,0,0.18);
 }
 
-/* ================= Account Buttons ================= */
+/* Account action buttons */
 .account-actions button {
     margin-left: 8px;
     padding: 8px 12px;
@@ -51,14 +54,23 @@
     border: none;
     cursor: pointer;
 }
-.edit-btn { background-color: #5667FF; color: #fff; }
-.delete-btn { background-color: #FF5656; color: #fff; }
 
-/* ================= Add Account Button ================= */
+.edit-btn {
+    background-color: #5667FF;
+    color: #fff;
+}
+
+.delete-btn {
+    background-color: #FF5656;
+    color: #fff;
+}
+
+/* Add account button */
 .add-account-btn {
     text-align: center;
     margin: 10px 0;
 }
+
 .add-account-btn button {
     padding: 12px 25px;
     border-radius: 12px;
@@ -69,12 +81,10 @@
     cursor: pointer;
 }
 
-/* ================= Popups (Add/Edit/Delete) ================= */
-
-/* ================= Popups (Add/Edit/Delete) ================= */
+/* Popups overlay */
 #popupOverlay,
 #deleteOverlay {
-    display: none; /* hidden by default */
+    display: none;
     position: fixed;
     inset: 0;
     background-color: rgba(0,0,0,0.5);
@@ -83,13 +93,13 @@
     z-index: 1000;
 }
 
-/* SHOW popups when hidden class is removed */
+/* Show popups when visible */
 #popupOverlay:not(.hidden),
 #deleteOverlay:not(.hidden) {
-    display: flex; /* make visible */
+    display: flex;
 }
 
-/* Popup card */
+/* Popup cards */
 #popupOverlay .popup-card,
 #deleteOverlay .popup-card {
     background-color: var(--color-white);
@@ -103,7 +113,7 @@
     text-align: center;
 }
 
-/* Inputs */
+/* Popup inputs */
 .popup-card input[type="text"],
 .popup-card input[type="number"] {
     padding: 10px;
@@ -113,7 +123,7 @@
     width: 100%;
 }
 
-/* Icon Picker */
+/* Icon picker grid */
 .icon-picker {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -121,10 +131,10 @@
     max-height: 240px;
     overflow-y: auto;
 }
+
 .icon-box {
     display: flex;
     justify-content: center;
-   
     background: #f2f2f2;
     border: 2px solid transparent;
     border-radius: 8px;
@@ -132,39 +142,63 @@
     cursor: pointer;
     font-size: 28px;
 }
-.icon-box input { display: none; }
+
+.icon-box input {
+    display: none;
+}
+
 .icon-box input:checked + .icon {
     border: 2px solid #007bff;
     border-radius: 8px;
 }
 
-/* Popup Buttons */
+/* Popup buttons */
 .popup-actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
 }
-#cancelPopup, #cancelDelete { background-color: #ccc; color: #333; }
-#confirmDelete { background-color: #FF3B3B; color: white; }
-#confirmDelete:hover { background-color: #e63232; }
 
-/* ================= Scrollbars ================= */
+#cancelPopup,
+#cancelDelete {
+    background-color: #ccc;
+    color: #333;
+}
+
+#confirmDelete {
+    background-color: #FF3B3B;
+    color: white;
+}
+
+#confirmDelete:hover {
+    background-color: #e63232;
+}
+
+/* Scrollbar styling */
 .accounts-cards-container::-webkit-scrollbar {
     width: 6px;
 }
+
 .accounts-cards-container::-webkit-scrollbar-thumb {
     background-color: rgba(0,0,0,0.2);
     border-radius: 3px;
 }
-.accounts-cards-container::-webkit-scrollbar-track { background: transparent; }
 
-/* ================= Responsive ================= */
-@media (max-width:768px){
-    .accounts-summary { flex-direction: column; }
-    .accounts-cards { gap: 10px; }
-    .popup-card { width: 90%; }
+.accounts-cards-container::-webkit-scrollbar-track {
+    background: transparent;
 }
-#popupOverlay:not(.hidden),
-#deleteOverlay:not(.hidden) {
-    display: flex;
+
+/* Responsive adjustments */
+@media (max-width:768px) {
+    .accounts-summary {
+        flex-direction: column;
+    }
+
+    .accounts-cards {
+        gap: 10px;
+    }
+
+    .popup-card {
+        width: 90%;
+    }
 }

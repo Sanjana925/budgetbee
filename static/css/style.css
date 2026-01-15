@@ -1,6 +1,3 @@
-/* ================================
-   Global Variables
-   ================================ */
 :root {
     --font-header: 'Montserrat', sans-serif;
     --font-text: 'Crimson Pro', serif;
@@ -13,28 +10,25 @@
     --color-subtitle: #555555;
 }
 
-/* ================================
-   Body & Page Container
-   ================================ */
+/* Body styling */
 body {
     margin: 0;
     padding: 0;
     height: 100vh;
     width: 100vw;
     font-family: var(--font-text);
-    overflow-x: hidden;   /* keep horizontal lock */
-    overflow-y: auto;     /* allow vertical scroll for popup */
+    overflow-x: hidden;
+    overflow-y: auto;
 }
+
 body h1 {
     font-size: 38px;
-    margin-top: 10px;
-    margin-right: 15px;
-    margin-bottom: 30px; /* space at the bottom */
-    margin-left: 5px;
+    margin: 10px 15px 30px 5px;
     font-weight: 700;
     color: var(--color-primary);
 }
 
+/* Page container */
 .page-container {
     display: flex;
     height: 100vh;
@@ -43,9 +37,7 @@ body h1 {
     box-sizing: border-box;
 }
 
-/* ================================
-   Left Column / Sidebar
-   ================================ */
+/* Columns */
 .left-column,
 .center-column,
 .right-column {
@@ -136,9 +128,7 @@ body h1 {
     color: var(--color-text);
 }
 
-/* ================================
-   Center Column / Main Content
-   ================================ */
+/* Center content */
 .center-column {
     flex: 6;
     background-color: var(--color-white);
@@ -149,9 +139,7 @@ body h1 {
     box-sizing: border-box;
 }
 
-/* ================================
-   Right Column / User & Accounts Cards
-   ================================ */
+/* Right sidebar */
 .right-column {
     flex: 3;
     display: flex;
@@ -161,6 +149,7 @@ body h1 {
     overflow: hidden;
 }
 
+/* Generic card */
 .card {
     background-color: var(--color-white);
     padding: 15px;
@@ -180,9 +169,7 @@ body h1 {
     flex-direction: column;
 }
 
-/* ================================
-   User Card Specific
-   ================================ */
+/* User card */
 .user-card {
     display: flex;
     flex-direction: column;
@@ -200,7 +187,7 @@ body h1 {
 }
 
 .user-header .edit-icon img {
-    width: 20px;  
+    width: 20px;
     height: 20px;
     vertical-align: middle;
 }
@@ -242,6 +229,7 @@ body h1 {
     color: var(--color-subtitle);
 }
 
+/* Progress bars */
 .progress-bars {
     width: 100%;
 }
@@ -279,44 +267,40 @@ body h1 {
 .spent-fill {
     background-color: #FF5722;
 }
-/* ================================
-   Accounts Card Specific (Right Sidebar)
-   ================================ */
+
+/* Accounts card */
 .accounts-card {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    height: 100%; /* fills bottom card height */
-    padding: 10px 15px; /* reduce left/right padding if needed */
+    height: 100%;
+    padding: 10px 15px;
     box-sizing: border-box;
 }
 
-/* Header */
 .accounts-card h4 {
     font-size: 20px;
     text-align: center;
     margin: 0 0 6px 0;
-    padding-left: 0;  /* remove extra left space */
-    padding-right: 0; /* remove extra right space */
+    padding-left: 0;
+    padding-right: 0;
 }
 
-/* Scrollable list */
 .account-list-container {
-    flex: 1; /* takes all space between header and add row */
+    flex: 1;
     overflow-y: auto;
-    padding: 0; /* remove left padding */
+    padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px; /* space between items */
+    gap: 6px;
 }
 
-/* Accounts card list */
 .account-list {
     list-style: none;
-    padding: 0;      /* remove default left padding */
+    padding: 0;
     margin: 0;
-    overflow-y: auto; /* scrollable if long */
-    max-height: 200px; /* adjust as needed */
+    overflow-y: auto;
+    max-height: 200px;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -325,14 +309,13 @@ body h1 {
 .account-list li {
     display: flex;
     align-items: center;
-    gap: 8px;             /* space between icon and text */
-    padding: 4px 6px;     /* very small left/right padding */
+    gap: 8px;
+    padding: 4px 6px;
     font-size: 18px;
     background-color: var(--color-white);
     border-radius: 6px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
-
 
 .account-list-container::-webkit-scrollbar {
     width: 6px;
@@ -347,7 +330,6 @@ body h1 {
     background: transparent;
 }
 
-/* Individual list items */
 .account-list li {
     display: flex;
     justify-content: space-between;
@@ -363,7 +345,7 @@ body h1 {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: auto; /* stays at bottom */
+    margin-top: auto;
 }
 
 .accounts-add-img {
@@ -386,9 +368,7 @@ body h1 {
     cursor: pointer;
 }
 
-/* ================================
-   Global Login Popup
-   ================================ */
+/* Login popup */
 .popup-overlay.hidden {
     display: none !important;
 }
@@ -403,7 +383,7 @@ body h1 {
     align-items: center;
     justify-content: center;
     background-color: rgba(0,0,0,0.5);
-    z-index: 9999;   /* make sure it’s higher than anything else */
+    z-index: 9999;
 }
 
 .popup-overlay .popup-card {

@@ -1,24 +1,66 @@
+/* Modal overlay */
 .modal-overlay {
-    position: fixed; top:0; left:0; width:100vw; height:100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0,0,0,0.4);
-    display:flex; justify-content:center; align-items:center; z-index:9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
 }
 
+/* Modal card */
 .modal-card {
-    width:420px; max-width:90%;
-    background:#fff; border-radius:14px; padding:25px;
-    display:flex; flex-direction:column; gap:14px;
-    box-shadow:0 8px 20px rgba(0,0,0,0.15);
+    width: 420px;
+    max-width: 90%;
+    background: #fff;
+    border-radius: 14px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 
-.modal-card h3 { text-align:center; margin:0; }
-.modal-card input, .modal-card select { width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; font-size:14px; }
-.modal-actions { display:flex; justify-content:space-between; margin-top:10px; }
-.modal-actions button:first-child { background:#f0f0f0; }
-.modal-actions button:last-child { background:var(--color-primary); color:white; }
-body.modal-open { overflow:hidden; }
+.modal-card h3 {
+    text-align: center;
+    margin: 0;
+}
 
-/* ================= Sliding Type Toggle ================= */
+.modal-card input,
+.modal-card select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+/* Modal actions buttons */
+.modal-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.modal-actions button:first-child {
+    background: #f0f0f0;
+}
+
+.modal-actions button:last-child {
+    background: var(--color-primary);
+    color: white;
+}
+
+/* Disable body scroll when modal is open */
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Sliding type toggle */
 .type-toggle {
     display: flex;
     gap: 4px;
