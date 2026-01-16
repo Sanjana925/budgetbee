@@ -1,3 +1,4 @@
+<!-- Charts page -->
 {% extends "finance/base.html" %}
 {% load static %}
 
@@ -8,13 +9,17 @@
 {% endblock %}
 
 {% block content %}
-<!-- Chart page layout -->
 <div class="chart-container">
 
     <div class="chart-header">
         <div class="toggle">
             <a href="#" class="toggle-btn" data-type="expense">Expense</a>
             <a href="#" class="toggle-btn" data-type="income">Income</a>
+        </div>
+        <div class="chart-month-nav">
+            <button id="prevMonthBtn" class="month-nav">&lt;</button>
+            <span id="currentMonthLabel" data-year="{{ current_year }}" data-month="{{ current_month }}"></span>
+            <button id="nextMonthBtn" class="month-nav">&gt;</button>
         </div>
     </div>
 
@@ -45,13 +50,18 @@
 </div>
 
 <script>
-    const incomeData = JSON.parse('{{ income_json|escapejs }}');
-    const expenseData = JSON.parse('{{ expense_json|escapejs }}');
-    const monthlyData = JSON.parse('{{ monthly_json|escapejs }}');
-    const categoryColors = JSON.parse('{{ category_colors_json|escapejs }}');
-    const category_type = '{{ category_type|default:"expense" }}';
+    window.incomeDataAll = JSON.parse('{{ income_json|escapejs }}') || {};
+    window.expenseDataAll = JSON.parse('{{ expense_json|escapejs }}') || {};
+    window.monthlyDataAll = JSON.parse('{{ monthly_json|escapejs }}') || [];
+    window.categoryColors = JSON.parse('{{ category_colors_json|escapejs }}') || {};
+
+    window.currentYear = parseInt("{{ current_year|default:'2026' }}", 10);
+    window.currentMonth = parseInt("{{ current_month|default:'1' }}", 10);
 </script>
 
+{% endblock %}
+
+{% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{% static 'js/chart.js' %}"></script>
 {% endblock %}
