@@ -8,22 +8,16 @@
 {% endblock %}
 
 {% block content %}
+<!-- Chart page layout -->
 <div class="chart-container">
 
-    <!-- Top Row: Toggle + Month Navigation -->
     <div class="chart-header">
         <div class="toggle">
             <a href="#" class="toggle-btn" data-type="expense">Expense</a>
             <a href="#" class="toggle-btn" data-type="income">Income</a>
         </div>
-        <div class="chart-month-nav">
-            <button id="prevMonthBtn" class="month-nav">&lt;</button>
-            <span id="currentMonthLabel" data-year="{{ current_year }}" data-month="{{ current_month }}"></span>
-            <button id="nextMonthBtn" class="month-nav">&gt;</button>
-        </div>
     </div>
 
-    <!-- Chart Card -->
     <div class="chart-card">
         <div class="chart-legend-container">
             <canvas id="chartCanvas"></canvas>
@@ -31,7 +25,6 @@
         <p class="empty-text" id="chartEmpty">No data available</p>
     </div>
 
-    <!-- Table Card -->
     <div class="table-card">
         <h3>Statistics</h3>
         <div class="table-wrapper">
@@ -51,19 +44,14 @@
 
 </div>
 
-<!-- Django data for JS -->
 <script>
-    const incomeDataAll = JSON.parse('{{ income_json|escapejs }}');
-    const expenseDataAll = JSON.parse('{{ expense_json|escapejs }}');
-    const monthlyDataAll = JSON.parse('{{ monthly_json|escapejs }}');
+    const incomeData = JSON.parse('{{ income_json|escapejs }}');
+    const expenseData = JSON.parse('{{ expense_json|escapejs }}');
+    const monthlyData = JSON.parse('{{ monthly_json|escapejs }}');
     const categoryColors = JSON.parse('{{ category_colors_json|escapejs }}');
+    const category_type = '{{ category_type|default:"expense" }}';
 </script>
 
-<!-- Chart.js library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- Modular JS -->
 <script src="{% static 'js/chart.js' %}"></script>
-<script src="{% static 'js/chart-navigation.js' %}"></script>
-
 {% endblock %}

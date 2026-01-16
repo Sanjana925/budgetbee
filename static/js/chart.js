@@ -1,3 +1,4 @@
+
 /* Charts rendering and monthly table update */
 document.addEventListener("DOMContentLoaded", () => {
     const ctx = document.getElementById('chartCanvas');

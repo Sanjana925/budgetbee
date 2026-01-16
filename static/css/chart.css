@@ -1,3 +1,4 @@
+
 /* Charts layout and table scrolling styles */
 .chart-container {
     display: flex;
@@ -108,31 +109,4 @@ canvas {
     position: sticky;
     top: 0;
     z-index: 1;
-}
-/* Chart top row: toggle + month navigation on same line */
-.chart-header {
-    display: flex;
-    justify-content: space-between; /* left toggle / right month nav */
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.chart-month-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.month-nav {
-    background: #eef1f7;
-    border: none;
-    padding: 4px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-}
-
-.month-nav:hover {
-    background: #d0d4e5;
 }
