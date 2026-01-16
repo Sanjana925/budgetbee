@@ -8,28 +8,78 @@
     padding-top: 20px;
 }
 
-/* Top summary section */
+/* Top summary section: two rows */
 .summary-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 20px;
-}
-
-/* Left side: income & expense */
-.summary-left {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    padding: 10px 20px;
 }
 
-.summary-text {
+/* Each summary row */
+.summary-row {
+    display: flex;
+    align-items: center;
+}
+
+/* Top row: income (left) + month nav (right) */
+.summary-row-top {
+    justify-content: space-between; /* Left: Income, Right: month nav */
+}
+
+.summary-row-top .summary-left {
+    font-weight: 600;
+    font-size: 32px;
+    font-family: var(--font-header);
+}
+
+.summary-month-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Bottom row: expense (left) + balance (right) */
+.summary-row-bottom {
+    justify-content: space-between;
+}
+
+.summary-row-bottom .summary-left {
+    font-weight: 600;
+    font-size: 32px;
+    font-family: var(--font-header);
+}
+
+.summary-row-bottom .summary-right {
+    font-weight: 600;
+    font-size: 32px;
+    font-family: var(--font-header);
+    text-align: right;
+}
+
+/* Month navigation buttons */
+.month-nav {
+    background: #eef1f7;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.month-nav:hover {
+    background: #d0d4e5;
+}
+
+/* Left side: income & expense */
+.summary-left p {
+    margin: 0;
     font-size: 14px;
     color: var(--color-subtitle);
-    margin: 0;
 }
 
-.summary-text .amount {
+.summary-left .amount {
     font-weight: 600;
     color: var(--color-text);
 }

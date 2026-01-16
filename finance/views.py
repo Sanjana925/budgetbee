@@ -1,11 +1,16 @@
 # Finance App Views
+import json
 from decimal import Decimal, InvalidOperation
 from collections import defaultdict
+from calendar import monthrange
+from datetime import date
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
 
 from .forms import AccountForm, CategoryForm, TransactionForm
 from .models import Account, Category, Transaction
@@ -16,41 +21,128 @@ from .constants import (
 )
 from .signals import recalc_account_balance
 
+# Helper for month navigation
+def prev_month(year, month):
+    if month == 1:
+        return year-1, 12
+    return year, month-1
 
-# ---------------------------
+def next_month(year, month):
+    if month == 12:
+        return year+1, 1
+    return year, month+1
+
 # HOME DASHBOARD
-# ---------------------------
-def home(request):
+def home(request, year=None, month=None):
     user = get_user_or_guest(request.user)
-    total_income, total_expense, total_balance = calculate_totals(user)
+    today = date.today()
+    year = int(year) if year else today.year
+    month = int(month) if month else today.month
+
+    month_start = date(year, month, 1)
+    month_end = date(year, month, monthrange(year, month)[1])
+
+    txs = Transaction.objects.filter(account__user=user, date__range=(month_start, month_end)).order_by('-date') if user else []
+
+    transactions_by_date = defaultdict(lambda: {"items": [], "total_income": 0, "total_expense": 0})
+    for tx in txs:
+        date_str = str(tx.date)
+        transactions_by_date[date_str]["items"].append(tx)
+        if tx.type == "income":
+            transactions_by_date[date_str]["total_income"] += tx.amount
+        else:
+            transactions_by_date[date_str]["total_expense"] += tx.amount
+
+    total_income = txs.filter(type="income").aggregate(total=Sum("amount"))["total"] or 0
+    total_expense = txs.filter(type="expense").aggregate(total=Sum("amount"))["total"] or 0
+    balance = total_income - total_expense
     accounts_list = Account.objects.filter(user=user) if user else []
 
-    # Group transactions by date
-    transactions_by_date = defaultdict(lambda: {"items": [], "total_income": 0, "total_expense": 0})
-    if user:
-        txs = Transaction.objects.filter(account__user=user).order_by('-date')
-        for tx in txs:
-            date_str = str(tx.date)
-            transactions_by_date[date_str]["items"].append(tx)
-            if tx.type == "income":
-                transactions_by_date[date_str]["total_income"] += tx.amount
-            else:
-                transactions_by_date[date_str]["total_expense"] += tx.amount
+    prev_year, prev_month_num = prev_month(year, month)
+    next_year, next_month_num = next_month(year, month)
 
     return render(request, 'finance/home.html', {
         "active": "home",
         "accounts": accounts_list,
         "total_income": total_income,
         "total_expense": total_expense,
-        "balance": total_balance,
+        "balance": balance,
         "transactions_by_date": dict(transactions_by_date),
+        "current_year": year,
+        "current_month": month,
+        "prev_year": prev_year,
+        "prev_month": prev_month_num,
+        "next_year": next_year,
+        "next_month": next_month_num,
         "is_authenticated": bool(user),
     })
 
+# CHARTS
+def chart(request, year=None, month=None):
+    user = get_user_or_guest(request.user)
+    today = date.today()
+    year = int(year) if year else today.year
+    month = int(month) if month else today.month
 
-# ---------------------------
+    month_start = date(year, month, 1)
+    month_end = date(year, month, monthrange(year, month)[1])
+
+    if not user:
+        return render(request, 'finance/chart.html', {
+            'active': 'chart',
+            'income_json': '{}',
+            'expense_json': '{}',
+            'monthly_json': '[]',
+            'category_colors_json': '{}',
+            'current_year': year,
+            'current_month': month,
+            'is_authenticated': False,
+        })
+
+    txs = Transaction.objects.filter(account__user=user, date__range=(month_start, month_end)).select_related('category')
+
+    expense_data = defaultdict(float)
+    income_data = defaultdict(float)
+    monthly_totals = []
+
+    for tx in txs:
+        cat_name = tx.category.name
+        if tx.type == "income":
+            income_data[cat_name] += float(tx.amount)
+        else:
+            expense_data[cat_name] += float(tx.amount)
+
+        date_str = str(tx.date)
+        entry = next((x for x in monthly_totals if x["date"] == date_str), None)
+        if not entry:
+            entry = {"date": date_str, "income": 0, "expense": 0}
+            monthly_totals.append(entry)
+        if tx.type == "income":
+            entry["income"] += float(tx.amount)
+        else:
+            entry["expense"] += float(tx.amount)
+
+    category_colors = {c.name: c.color for c in Category.objects.filter(user=user)}
+
+    prev_year, prev_month_num = prev_month(year, month)
+    next_year, next_month_num = next_month(year, month)
+
+    return render(request, 'finance/chart.html', {
+        'active': 'chart',
+        'income_json': json.dumps(income_data),
+        'expense_json': json.dumps(expense_data),
+        'monthly_json': json.dumps(monthly_totals),
+        'category_colors_json': json.dumps(category_colors),
+        'current_year': year,
+        'current_month': month,
+        'prev_year': prev_year,
+        'prev_month': prev_month_num,
+        'next_year': next_year,
+        'next_month': next_month_num,
+        'is_authenticated': True,
+    })
+
 # TRANSACTIONS CRUD
-# ---------------------------
 def add_transaction(request):
     user = get_user_or_guest(request.user)
     if not user:
@@ -81,7 +173,6 @@ def add_transaction(request):
             })
         return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
 
-    # GET → render modal
     accounts = Account.objects.filter(user=user)
     categories = Category.objects.filter(user=user)
     today = timezone.now().date()
@@ -91,11 +182,9 @@ def add_transaction(request):
         "today": today,
     })
 
-
 @login_required
 def edit_transaction(request, transaction_id):
     tx = get_object_or_404(Transaction, id=transaction_id, account__user=request.user)
-
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         form = TransactionForm(request.POST, instance=tx)
         if form.is_valid():
@@ -130,7 +219,6 @@ def edit_transaction(request, transaction_id):
         "today": tx.date,
     })
 
-
 @login_required
 def delete_transaction(request, transaction_id):
     tx = get_object_or_404(Transaction, id=transaction_id, account__user=request.user)
@@ -146,26 +234,7 @@ def delete_transaction(request, transaction_id):
         })
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-
-# ---------------------------
-# CHARTS
-# ---------------------------
-def chart(request):
-    user = get_user_or_guest(request.user)
-    chart_data = prepare_chart_data(user)
-    return render(request, 'finance/chart.html', {
-        'active': 'chart',
-        'income_json': chart_data['income_json'],
-        'expense_json': chart_data['expense_json'],
-        'monthly_json': chart_data['monthly_json'],
-        'category_colors_json': chart_data['category_colors_json'],
-        'is_authenticated': bool(user),
-    })
-
-
-# ---------------------------
 # CATEGORY CRUD
-# ---------------------------
 def category(request):
     ctype = request.GET.get('type', 'expense')
     user = get_user_or_guest(request.user)
@@ -186,7 +255,6 @@ def category(request):
         "default_category_colors": DEFAULT_CATEGORY_COLORS,
     })
 
-
 @login_required
 def add_category(request):
     if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -199,7 +267,6 @@ def add_category(request):
         return JsonResponse({"success": False, "error": form.errors.as_json()})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-
 @login_required
 def edit_category(request, category_id):
     category = get_object_or_404(Category, id=category_id, user=request.user)
@@ -211,7 +278,6 @@ def edit_category(request, category_id):
         return JsonResponse({"success": False, "error": form.errors.as_json()})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-
 @login_required
 def delete_category(request, category_id):
     category = get_object_or_404(Category, id=category_id, user=request.user)
@@ -220,10 +286,7 @@ def delete_category(request, category_id):
         return JsonResponse({"success": True})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-
-# ---------------------------
 # ACCOUNTS CRUD
-# ---------------------------
 def accounts(request):
     user = get_user_or_guest(request.user)
     if user:
@@ -249,7 +312,6 @@ def accounts(request):
         "default_account_icons": DEFAULT_ACCOUNT_ICONS
     })
 
-
 @login_required
 def add_account(request):
     if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -269,7 +331,6 @@ def add_account(request):
         )
         return JsonResponse({"success": True})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
-
 
 @login_required
 def edit_account(request, account_id):
@@ -292,7 +353,6 @@ def edit_account(request, account_id):
         return JsonResponse({"success": True})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-
 @login_required
 def delete_account(request, account_id):
     account = get_object_or_404(Account, pk=account_id, user=request.user)
@@ -301,10 +361,7 @@ def delete_account(request, account_id):
         return JsonResponse({"success": True})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-
-# ---------------------------
 # SETTINGS PAGE
-# ---------------------------
 def settings(request):
     user = get_user_or_guest(request.user)
     if not user:

@@ -6,11 +6,12 @@ app_name = 'finance'
 urlpatterns = [
     # Home / Dashboard
     path('', views.home, name='home'),
+    path('<int:year>/<int:month>/', views.home, name='home_month'),
 
     # Transactions
-    path('transaction/', views.add_transaction, name='add_transaction'),            # Add transaction modal + POST
-    path('transaction/edit/<int:transaction_id>/', views.edit_transaction, name='edit_transaction'),  # Edit transaction modal + POST
-    path('transaction/delete/<int:transaction_id>/', views.delete_transaction, name='delete_transaction'),  # Delete via AJAX
+    path('transaction/', views.add_transaction, name='add_transaction'),
+    path('transaction/edit/<int:transaction_id>/', views.edit_transaction, name='edit_transaction'),
+    path('transaction/delete/<int:transaction_id>/', views.delete_transaction, name='delete_transaction'),
 
     # Accounts
     path('accounts/', views.accounts, name='accounts'),
@@ -26,5 +27,6 @@ urlpatterns = [
 
     # Chart & Settings
     path('chart/', views.chart, name='chart'),
+    path('chart/<int:year>/<int:month>/', views.chart, name='chart_month'),
     path('settings/', views.settings, name='settings'),
 ]

@@ -13,14 +13,30 @@
 
     <!-- Top Summary -->
     <div class="summary-section">
-        <div class="summary-left">
-            <p>Total Income: <span class="amount">Rs. {{ total_income|default:"0.00" }}</span></p>
-            <p>Total Expense: <span class="amount">Rs. {{ total_expense|default:"0.00" }}</span></p>
+
+        <!-- Top row: Total Income (left) + Month nav (right) -->
+        <div class="summary-row summary-row-top">
+            <div class="summary-left">
+                <p>Total Income: <span class="amount">Rs. {{ total_income|default:"0.00" }}</span></p>
+            </div>
+            <div class="summary-month-nav">
+                <button id="prevMonthBtn" class="month-nav">&lt;</button>
+                <span id="currentMonthLabel" data-year="{{ current_year }}" data-month="{{ current_month }}"></span>
+                <button id="nextMonthBtn" class="month-nav">&gt;</button>
+            </div>
         </div>
-        <div class="summary-right">
-            <span class="balance-label">YOUR BALANCE</span>
-            <h2 class="balance-amount">Rs. {{ balance|default:"0.00" }}</h2>
+
+        <!-- Bottom row: Total Expense (left) + Balance (right) -->
+        <div class="summary-row summary-row-bottom">
+            <div class="summary-left">
+                <p>Total Expense: <span class="amount">Rs. {{ total_expense|default:"0.00" }}</span></p>
+            </div>
+            <div class="summary-right">
+                <span class="balance-label">YOUR BALANCE</span>
+                <h2 class="balance-amount">Rs. {{ balance|default:"0.00" }}</h2>
+            </div>
         </div>
+
     </div>
 
     <hr class="summary-divider">
@@ -47,7 +63,6 @@
                             <span class="amount {% if tx.type == 'income' %}income{% else %}expense{% endif %}">
                                 {% if tx.type == 'income' %}+{% else %}-{% endif %} Rs. {{ tx.amount }}
                             </span>
-                            <!-- Edit & Delete Buttons -->
                             <button class="edit-transaction" data-id="{{ tx.id }}">✏️</button>
                             <button class="delete-transaction" data-id="{{ tx.id }}">🗑️</button>
                         </div>
@@ -57,21 +72,18 @@
                 {% endfor %}
             </div>
         {% else %}
-            <!-- Empty State -->
             <div class="empty-state" id="emptyState">
                 <p class="empty-title">“You haven’t added any transactions yet.”</p>
                 <p class="empty-subtitle">Add a transaction to get started.</p>
             </div>
         {% endif %}
     {% else %}
-        <!-- Guest Empty State -->
         <div class="empty-state">
             <p class="empty-title">“Looks like you don’t have an account yet.”</p>
             <p class="empty-subtitle">Create an account to begin.</p>
         </div>
     {% endif %}
 
-    <!-- Floating Add Button -->
     {% if request.user.is_authenticated %}
     <div class="floating-add-wrapper">
         <a href="javascript:void(0);" id="newTransactionBtn" class="floating-add-btn">+</a>
@@ -84,4 +96,5 @@
 
 {% block extra_js %}
 <script src="{% static 'js/transaction.js' %}"></script>
+<script src="{% static 'js/home.js' %}"></script>
 {% endblock %}
