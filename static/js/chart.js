@@ -1,3 +1,4 @@
+/* Charts rendering and monthly table update */
 document.addEventListener("DOMContentLoaded", () => {
     const ctx = document.getElementById('chartCanvas');
     const emptyText = document.getElementById('chartEmpty');
@@ -8,13 +9,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const toggleBtns = document.querySelectorAll('.toggle .toggle-btn');
     let currentType = typeof category_type !== 'undefined' ? category_type : 'expense';
 
-    // Set active toggle
     toggleBtns.forEach(btn => {
         if (btn.dataset.type === currentType) btn.classList.add('active');
         else btn.classList.remove('active');
     });
 
-    // Toggle click
     toggleBtns.forEach(btn => {
         btn.addEventListener('click', e => {
             e.preventDefault();
@@ -25,7 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Render chart
     function renderChart(type) {
         if (chart) chart.destroy();
 
@@ -69,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
         updateMonthlyTable(type);
     }
 
-    // Update table
     function updateMonthlyTable(type) {
         tbody.innerHTML = "";
         monthlyData.forEach(item => {

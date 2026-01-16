@@ -1,13 +1,12 @@
-/* Full page layout */
+/* Charts layout and table scrolling styles */
 .chart-container {
     display: flex;
     flex-direction: column;
-    height: 100%; /* fill center-column height */
+    height: calc(100vh - 120px);
     gap: 15px;
     padding: 10px 20px;
 }
 
-/* Header: toggle buttons */
 .chart-header {
     display: flex;
     justify-content: flex-start;
@@ -41,57 +40,31 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 }
 
-/* Chart card */
 .chart-card {
-    flex: 1; /* smaller height */
-    background: #fff;
-    border-radius: 14px;
+    flex: 1;
+    background: white;
     padding: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     position: relative;
+    min-height: 0;
 }
 
-/* Chart + legend container */
 .chart-legend-container {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    gap: 50px; /* gap between chart and legend */
+    gap: 50px;
     width: 100%;
     height: 100%;
 }
 
-/* Chart */
 canvas {
-    max-width: 50%;    /* chart smaller */
-    max-height: 250px; /* smaller chart height */
+    max-width: 50%;
+    max-height: 250px;
 }
 
-/* Category legend */
-.category-legend {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-}
-
-.color-box {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-}
-
-/* Empty chart message */
 .empty-text {
     text-align: center;
     color: #888;
@@ -99,15 +72,13 @@ canvas {
     display: none;
 }
 
-/* Monthly table */
 .table-card {
-    flex: 1.5; /* bigger table */
-    background: #fff;
-    border-radius: 14px;
+    flex: 1.5;
+    background: white;
     padding: 15px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     display: flex;
     flex-direction: column;
+    min-height: 0;
 }
 
 .table-card h3 {
@@ -115,8 +86,9 @@ canvas {
 }
 
 .table-wrapper {
+    flex: 1;
     overflow-y: auto;
-    flex: 1; /* table fills remaining height */
+    min-height: 0;
 }
 
 .table-wrapper table {
@@ -135,4 +107,5 @@ canvas {
     background: #f5f5f5;
     position: sticky;
     top: 0;
+    z-index: 1;
 }

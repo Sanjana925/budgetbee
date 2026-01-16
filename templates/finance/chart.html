@@ -8,9 +8,9 @@
 {% endblock %}
 
 {% block content %}
+<!-- Chart page layout -->
 <div class="chart-container">
 
-    <!-- HEADER: Toggle -->
     <div class="chart-header">
         <div class="toggle">
             <a href="#" class="toggle-btn" data-type="expense">Expense</a>
@@ -18,7 +18,6 @@
         </div>
     </div>
 
-    <!-- Chart + Legend -->
     <div class="chart-card">
         <div class="chart-legend-container">
             <canvas id="chartCanvas"></canvas>
@@ -26,7 +25,6 @@
         <p class="empty-text" id="chartEmpty">No data available</p>
     </div>
 
-    <!-- Monthly Table -->
     <div class="table-card">
         <h3>Statistics</h3>
         <div class="table-wrapper">
@@ -46,7 +44,6 @@
 
 </div>
 
-<!-- Pass data from Django -->
 <script>
     const incomeData = JSON.parse('{{ income_json|escapejs }}');
     const expenseData = JSON.parse('{{ expense_json|escapejs }}');
