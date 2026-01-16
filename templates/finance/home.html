@@ -11,10 +11,9 @@
 {% block content %}
 <div class="home-container">
 
-    <!-- Top Summary -->
+    <!-- Top summary section -->
     <div class="summary-section">
 
-        <!-- Top row: Total Income (left) + Month nav (right) -->
         <div class="summary-row summary-row-top">
             <div class="summary-left">
                 <p>Total Income: <span class="amount">Rs. {{ total_income|default:"0.00" }}</span></p>
@@ -26,7 +25,6 @@
             </div>
         </div>
 
-        <!-- Bottom row: Total Expense (left) + Balance (right) -->
         <div class="summary-row summary-row-bottom">
             <div class="summary-left">
                 <p>Total Expense: <span class="amount">Rs. {{ total_expense|default:"0.00" }}</span></p>
@@ -43,7 +41,7 @@
 
     {% if request.user.is_authenticated %}
         {% if transactions_by_date %}
-            <!-- Transactions List -->
+            <!-- Transactions container -->
             <div class="transactions-container" id="transactionsContainer">
                 {% for date, txs in transactions_by_date.items %}
                 <div class="date-card" data-date="{{ date }}">
@@ -72,12 +70,14 @@
                 {% endfor %}
             </div>
         {% else %}
+            <!-- Empty state when no transactions -->
             <div class="empty-state" id="emptyState">
                 <p class="empty-title">“You haven’t added any transactions yet.”</p>
                 <p class="empty-subtitle">Add a transaction to get started.</p>
             </div>
         {% endif %}
     {% else %}
+        <!-- Empty state when not logged in -->
         <div class="empty-state">
             <p class="empty-title">“Looks like you don’t have an account yet.”</p>
             <p class="empty-subtitle">Create an account to begin.</p>
@@ -85,6 +85,7 @@
     {% endif %}
 
     {% if request.user.is_authenticated %}
+    <!-- Floating add transaction button -->
     <div class="floating-add-wrapper">
         <a href="javascript:void(0);" id="newTransactionBtn" class="floating-add-btn">+</a>
         <span class="floating-add-label">New</span>

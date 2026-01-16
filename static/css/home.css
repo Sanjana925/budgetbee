@@ -1,4 +1,4 @@
-/* Home page main container */
+/* Home page layout and transactions styling */
 .home-container {
     height: 100%;
     width: 100%;
@@ -8,7 +8,6 @@
     padding-top: 20px;
 }
 
-/* Top summary section: two rows */
 .summary-section {
     display: flex;
     flex-direction: column;
@@ -16,15 +15,13 @@
     padding: 10px 20px;
 }
 
-/* Each summary row */
 .summary-row {
     display: flex;
     align-items: center;
 }
 
-/* Top row: income (left) + month nav (right) */
 .summary-row-top {
-    justify-content: space-between; /* Left: Income, Right: month nav */
+    justify-content: space-between;
 }
 
 .summary-row-top .summary-left {
@@ -39,7 +36,6 @@
     gap: 8px;
 }
 
-/* Bottom row: expense (left) + balance (right) */
 .summary-row-bottom {
     justify-content: space-between;
 }
@@ -57,7 +53,6 @@
     text-align: right;
 }
 
-/* Month navigation buttons */
 .month-nav {
     background: #eef1f7;
     border: none;
@@ -72,7 +67,6 @@
     background: #d0d4e5;
 }
 
-/* Left side: income & expense */
 .summary-left p {
     margin: 0;
     font-size: 14px;
@@ -84,7 +78,6 @@
     color: var(--color-text);
 }
 
-/* Right side: balance */
 .summary-right {
     text-align: right;
 }
@@ -102,14 +95,12 @@
     color: var(--color-heading);
 }
 
-/* Divider line */
 .summary-divider {
     border: none;
     border-top: 1px solid #dcdcdc;
     margin: 10px 0;
 }
 
-/* Empty state message */
 .empty-state {
     flex: 1;
     display: flex;
@@ -133,7 +124,6 @@
     margin: 0;
 }
 
-/* Floating add button */
 .floating-add-wrapper {
     position: absolute;
     bottom: 20px;
@@ -169,7 +159,6 @@
     cursor: pointer;
 }
 
-/* Transactions container */
 .transactions-container {
     max-height: 500px;
     overflow-y: auto;
@@ -209,7 +198,6 @@
     border-bottom: none;
 }
 
-/* Amount colors */
 .amount.income {
     color: green;
 }
@@ -218,7 +206,6 @@
     color: red;
 }
 
-/* Category icon spacing */
 .category .icon {
     margin-right: 6px;
 }
