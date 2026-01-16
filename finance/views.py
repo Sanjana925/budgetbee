@@ -14,25 +14,25 @@ from django.db.models import Sum
 
 from .forms import AccountForm, CategoryForm, TransactionForm
 from .models import Account, Category, Transaction
-from .utils import get_user_or_guest, calculate_totals
+from .utils import get_user_or_guest, calculate_totals, prepare_chart_data
 from .constants import (
     DEFAULT_ACCOUNTS, DEFAULT_ACCOUNT_ICONS,
     DEFAULT_CATEGORIES, DEFAULT_CATEGORY_ICONS, DEFAULT_CATEGORY_COLORS
 )
 from .signals import recalc_account_balance
 
-
-# Get previous month and year
+# Helper for month navigation
 def prev_month(year, month):
-    return (year - 1, 12) if month == 1 else (year, month - 1)
+    if month == 1:
+        return year-1, 12
+    return year, month-1
 
-
-# Get next month and year
 def next_month(year, month):
-    return (year + 1, 1) if month == 12 else (year, month + 1)
+    if month == 12:
+        return year+1, 1
+    return year, month+1
 
-
-# Home dashboard view
+# HOME DASHBOARD
 def home(request, year=None, month=None):
     user = get_user_or_guest(request.user)
     today = date.today()
@@ -42,30 +42,28 @@ def home(request, year=None, month=None):
     month_start = date(year, month, 1)
     month_end = date(year, month, monthrange(year, month)[1])
 
-    txs = Transaction.objects.filter(
-        account__user=user,
-        date__range=(month_start, month_end)
-    ).order_by('-date') if user else []
+    txs = Transaction.objects.filter(account__user=user, date__range=(month_start, month_end)).order_by('-date') if user else []
 
     transactions_by_date = defaultdict(lambda: {"items": [], "total_income": 0, "total_expense": 0})
-
     for tx in txs:
-        d = str(tx.date)
-        transactions_by_date[d]["items"].append(tx)
+        date_str = str(tx.date)
+        transactions_by_date[date_str]["items"].append(tx)
         if tx.type == "income":
-            transactions_by_date[d]["total_income"] += tx.amount
+            transactions_by_date[date_str]["total_income"] += tx.amount
         else:
-            transactions_by_date[d]["total_expense"] += tx.amount
+            transactions_by_date[date_str]["total_expense"] += tx.amount
 
     total_income = txs.filter(type="income").aggregate(total=Sum("amount"))["total"] or 0
     total_expense = txs.filter(type="expense").aggregate(total=Sum("amount"))["total"] or 0
     balance = total_income - total_expense
+    accounts_list = Account.objects.filter(user=user) if user else []
 
-    prev_year, prev_m = prev_month(year, month)
-    next_year, next_m = next_month(year, month)
+    prev_year, prev_month_num = prev_month(year, month)
+    next_year, next_month_num = next_month(year, month)
 
-    return render(request, "finance/home.html", {
+    return render(request, 'finance/home.html', {
         "active": "home",
+        "accounts": accounts_list,
         "total_income": total_income,
         "total_expense": total_expense,
         "balance": balance,
@@ -73,14 +71,14 @@ def home(request, year=None, month=None):
         "current_year": year,
         "current_month": month,
         "prev_year": prev_year,
-        "prev_month": prev_m,
+        "prev_month": prev_month_num,
         "next_year": next_year,
-        "next_month": next_m,
+        "next_month": next_month_num,
         "is_authenticated": bool(user),
     })
 
-
-# Charts view
+# CHARTS
+# CHARTS
 def chart(request, year=None, month=None):
     user = get_user_or_guest(request.user)
     today = date.today()
@@ -91,59 +89,55 @@ def chart(request, year=None, month=None):
     month_end = date(year, month, monthrange(year, month)[1])
 
     if not user:
-        return render(request, "finance/chart.html", {
-            "active": "chart",
-            "income_json": "{}",
-            "expense_json": "{}",
-            "monthly_json": "[]",
-            "category_colors_json": "{}",
-            "current_year": year,
-            "current_month": month,
-            "is_authenticated": False,
+        return render(request, 'finance/chart.html', {
+            'active': 'chart',
+            'income_json': '{}',
+            'expense_json': '{}',
+            'monthly_json': '[]',
+            'category_colors_json': '{}',
+            'current_year': year,
+            'current_month': month,
+            'is_authenticated': False,
         })
 
-    txs = Transaction.objects.filter(
-        account__user=user,
-        date__range=(month_start, month_end)
-    ).select_related("category")
+    txs = Transaction.objects.filter(account__user=user, date__range=(month_start, month_end)).select_related('category')
 
-    income_data = defaultdict(float)
     expense_data = defaultdict(float)
+    income_data = defaultdict(float)
     monthly_totals = []
 
     for tx in txs:
-        cname = tx.category.name
+        cat_name = tx.category.name
         if tx.type == "income":
-            income_data[cname] += float(tx.amount)
+            income_data[cat_name] += float(tx.amount)
         else:
-            expense_data[cname] += float(tx.amount)
+            expense_data[cat_name] += float(tx.amount)
 
-        d = str(tx.date)
-        row = next((x for x in monthly_totals if x["date"] == d), None)
-        if not row:
-            row = {"date": d, "income": 0, "expense": 0}
-            monthly_totals.append(row)
-
+        date_str = str(tx.date)
+        entry = next((x for x in monthly_totals if x["date"] == date_str), None)
+        if not entry:
+            entry = {"date": date_str, "income": 0, "expense": 0}
+            monthly_totals.append(entry)
         if tx.type == "income":
-            row["income"] += float(tx.amount)
+            entry["income"] += float(tx.amount)
         else:
-            row["expense"] += float(tx.amount)
+            entry["expense"] += float(tx.amount)
 
     category_colors = {c.name: c.color for c in Category.objects.filter(user=user)}
 
-    return render(request, "finance/chart.html", {
-        "active": "chart",
-        "income_json": json.dumps(income_data),
-        "expense_json": json.dumps(expense_data),
-        "monthly_json": json.dumps(monthly_totals),
-        "category_colors_json": json.dumps(category_colors),
-        "current_year": year,
-        "current_month": month,
-        "is_authenticated": True,
+    return render(request, 'finance/chart.html', {
+        'active': 'chart',
+        'income_json': json.dumps(income_data),
+        'expense_json': json.dumps(expense_data),
+        'monthly_json': json.dumps(monthly_totals),
+        'category_colors_json': json.dumps(category_colors),
+        'current_year': year,
+        'current_month': month,
+        'is_authenticated': True,
     })
 
 
-# Add new transaction
+# TRANSACTIONS CRUD
 def add_transaction(request):
     user = get_user_or_guest(request.user)
     if not user:
@@ -153,87 +147,219 @@ def add_transaction(request):
         form = TransactionForm(request.POST)
         if form.is_valid():
             tx = form.save(commit=False)
-            tx.account = Account.objects.get(id=request.POST["account"], user=user)
-            tx.category = Category.objects.get(id=request.POST["category"], user=user)
+            tx.account = Account.objects.get(id=request.POST.get("account"), user=user)
+            tx.category = Category.objects.get(id=request.POST.get("category"), user=user)
             tx.save()
-
             total_income, total_expense, total_balance = calculate_totals(user)
             return JsonResponse({
                 "success": True,
                 "total_income": float(total_income),
                 "total_expense": float(total_expense),
                 "balance": float(total_balance),
+                "transaction": {
+                    "id": tx.id,
+                    "amount": float(tx.amount),
+                    "type": tx.type,
+                    "category_name": tx.category.name,
+                    "category_icon": tx.category.icon,
+                    "date": str(tx.date),
+                    "note": tx.note
+                }
             })
-
         return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
 
-    return JsonResponse({"success": False}, status=400)
+    accounts = Account.objects.filter(user=user)
+    categories = Category.objects.filter(user=user)
+    today = timezone.now().date()
+    return render(request, 'finance/transaction.html', {
+        "accounts": accounts,
+        "categories": categories,
+        "today": today,
+    })
 
-
-# Edit transaction
 @login_required
 def edit_transaction(request, transaction_id):
     tx = get_object_or_404(Transaction, id=transaction_id, account__user=request.user)
-
     if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
         form = TransactionForm(request.POST, instance=tx)
         if form.is_valid():
-            form.save()
+            tx = form.save(commit=False)
+            tx.account = Account.objects.get(id=request.POST.get("account"), user=request.user)
+            tx.category = Category.objects.get(id=request.POST.get("category"), user=request.user)
+            tx.save()
             total_income, total_expense, total_balance = calculate_totals(request.user)
             return JsonResponse({
                 "success": True,
                 "total_income": float(total_income),
                 "total_expense": float(total_expense),
                 "balance": float(total_balance),
+                "transaction": {
+                    "id": tx.id,
+                    "amount": float(tx.amount),
+                    "type": tx.type,
+                    "category_name": tx.category.name,
+                    "category_icon": tx.category.icon,
+                    "date": str(tx.date),
+                    "note": tx.note
+                }
             })
-
         return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
 
+    accounts = Account.objects.filter(user=request.user)
+    categories = Category.objects.filter(user=request.user)
+    return render(request, 'finance/transaction.html', {
+        "transaction": tx,
+        "accounts": accounts,
+        "categories": categories,
+        "today": tx.date,
+    })
 
-# Delete transaction
 @login_required
 def delete_transaction(request, transaction_id):
     tx = get_object_or_404(Transaction, id=transaction_id, account__user=request.user)
-    if request.method == "POST" and request.headers.get("x-requested-with") == "XMLHttpRequest":
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         tx.delete()
-        return JsonResponse({"success": True})
-    return JsonResponse({"success": False}, status=400)
+        total_income, total_expense, total_balance = calculate_totals(request.user)
+        return JsonResponse({
+            "success": True,
+            "total_income": float(total_income),
+            "total_expense": float(total_expense),
+            "balance": float(total_balance),
+            "transaction_id": transaction_id
+        })
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-
-# Category list page
+# CATEGORY CRUD
 def category(request):
-    ctype = request.GET.get("type", "expense")
+    ctype = request.GET.get('type', 'expense')
     user = get_user_or_guest(request.user)
 
-    categories = Category.objects.filter(user=user, type=ctype) if user else []
-    return render(request, "finance/category.html", {
+    if user:
+        categories = Category.objects.filter(user=user, type=ctype)
+    else:
+        categories = [
+            {"id": i+1, "name": name, "icon": icon, "color": color}
+            for i, (name, icon, color) in enumerate(DEFAULT_CATEGORIES.get(ctype, []))
+        ]
+
+    return render(request, 'finance/category.html', {
         "categories": categories,
         "category_type": ctype,
         "is_authenticated": bool(user),
+        "default_category_icons": DEFAULT_CATEGORY_ICONS,
+        "default_category_colors": DEFAULT_CATEGORY_COLORS,
     })
 
+@login_required
+def add_category(request):
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            cat = form.save(commit=False)
+            cat.user = request.user
+            cat.save()
+            return JsonResponse({"success": True})
+        return JsonResponse({"success": False, "error": form.errors.as_json()})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-# Accounts page
+@login_required
+def edit_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id, user=request.user)
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({"success": True})
+        return JsonResponse({"success": False, "error": form.errors.as_json()})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
+@login_required
+def delete_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id, user=request.user)
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        category.delete()
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
+# ACCOUNTS CRUD
 def accounts(request):
     user = get_user_or_guest(request.user)
+    if user:
+        accounts_list = [
+            {"id": a.id, "name": a.name, "balance": a.balance, "icon": a.icon} 
+            for a in Account.objects.filter(user=user)
+        ]
+        total_income, total_expense, total_balance = calculate_totals(user)
+    else:
+        accounts_list = [
+            {"id": i+1, "name": name, "balance": balance, "icon": icon} 
+            for i, (name, icon, balance) in enumerate(DEFAULT_ACCOUNTS)
+        ]
+        total_income = total_expense = total_balance = 0.0
 
-    accounts_list = Account.objects.filter(user=user) if user else []
-    total_income, total_expense, total_balance = calculate_totals(user) if user else (0, 0, 0)
-
-    return render(request, "finance/accounts.html", {
+    return render(request, 'finance/accounts.html', {
         "active": "accounts",
         "user_accounts": accounts_list,
         "total_balance": total_balance,
         "total_income": total_income,
         "total_expense": total_expense,
         "is_authenticated": bool(user),
+        "default_account_icons": DEFAULT_ACCOUNT_ICONS
     })
 
+@login_required
+def add_account(request):
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        name = request.POST.get('name', '').strip()
+        icon = request.POST.get('icon', '💰')
+        initial_amount_str = request.POST.get('initial_amount', '').strip()
+        try:
+            initial_amount = Decimal(initial_amount_str) if initial_amount_str else Decimal(0)
+        except InvalidOperation:
+            return JsonResponse({"success": False, "error": "Invalid initial amount"}, status=400)
+        if not name:
+            return JsonResponse({"success": False, "error": "Account name required"})
+        Account.objects.create(
+            user=request.user, name=name,
+            initial_amount=initial_amount, balance=initial_amount,
+            icon=icon
+        )
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-# Settings page
+@login_required
+def edit_account(request, account_id):
+    account = get_object_or_404(Account, pk=account_id, user=request.user)
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        name = request.POST.get('name', '').strip()
+        icon = request.POST.get('icon', account.icon)
+        initial_amount_str = request.POST.get('initial_amount', '').strip()
+        try:
+            initial_amount = Decimal(initial_amount_str) if initial_amount_str else account.initial_amount
+        except InvalidOperation:
+            return JsonResponse({"success": False, "error": "Invalid initial amount"}, status=400)
+        if not name:
+            return JsonResponse({"success": False, "error": "Account name required"})
+        account.name = name
+        account.initial_amount = initial_amount
+        account.icon = icon
+        account.save()
+        recalc_account_balance(account)
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
+@login_required
+def delete_account(request, account_id):
+    account = get_object_or_404(Account, pk=account_id, user=request.user)
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        account.delete()
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
+# SETTINGS PAGE
 def settings(request):
     user = get_user_or_guest(request.user)
     if not user:
-        messages.warning(request, "Login required.")
-        return redirect("userauths:login")
-    return render(request, "finance/settings.html", {"active": "settings"})
+        messages.warning(request, "You must be logged in to access settings.")
+        return redirect('userauths:login')
+    return render(request, 'finance/settings.html', {'active': 'settings'})
