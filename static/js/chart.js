@@ -83,3 +83,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderChart(currentType);
 });
+
+
