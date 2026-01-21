@@ -1,0 +1,96 @@
+{% extends 'finance/base.html' %}
+{% load static %}
+
+{% block title %}Budget - Budget Bee{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/budget.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="budget-container" id="budgetContainer">
+
+    <!-- Header -->
+    <div class="budget-header">
+        <h3>Category Budgets</h3>
+        {% if request.user.is_authenticated %}
+            <button id="openAddBudget" class="add-btn">+</button>
+        {% else %}
+            <button id="openAddBudget" class="add-btn" data-requires-auth>+</button>
+        {% endif %}
+    </div>
+
+    <!-- Month Navigation -->
+    <div class="month-nav">
+        <a href="{% url 'finance:budget' prev_year prev_month %}">◀ Prev</a>
+        <span>{{ current_month }}/{{ current_year }}</span>
+        <a href="{% url 'finance:budget' next_year next_month %}">Next ▶</a>
+    </div>
+
+    <!-- Budget List -->
+    <div class="budget-list">
+        {% for cat in categories %}
+            <div class="budget-card" data-id="{{ cat.id }}">
+                <!-- Row 1: icon + name -->
+                <div class="budget-row-top">
+                    <span class="icon">{{ cat.icon }}</span>
+                    <span class="name">{{ cat.name }}</span>
+                </div>
+
+                <!-- Row 2: progress + amount + edit -->
+                <div class="budget-row-bottom">
+                    <div class="progress-container">
+                        <div class="budget-progress progress-bar" style="width: {{ cat.percent|default:0 }}%;"></div>
+                    </div>
+                    <div class="amount">
+                        Rs <span class="spent">{{ cat.spent|default:0 }}</span> /
+                        Rs <span class="budget-amount">{{ cat.budget|default:0 }}</span>
+                    </div>
+                    {% if request.user.is_authenticated %}
+                        <button class="edit-btn" data-id="{{ cat.id }}" data-amount="{{ cat.budget|default:0 }}">✏️</button>
+                    {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <p class="empty-text">No categories found.</p>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% if request.user.is_authenticated %}
+<!-- Add/Edit Budget Popup -->
+<div class="popup-overlay hidden" id="budgetPopup">
+    <div class="popup-card">
+        <h3 id="popupTitle">Set Budget</h3>
+        <form id="budgetForm">
+            {% csrf_token %}
+            <label>Category:</label>
+            <select name="category" required>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            <label>Budget Amount (Rs):</label>
+            <input type="number" name="amount" min="0" step="0.01" required>
+            <div class="popup-actions">
+                <button type="button" id="cancelBudget">Cancel</button>
+                <button type="submit">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+
+{{ budgets_json|json_script:"budgetsData" }}
+<script>
+const getBudgetSpentUrl = "{% url 'finance:get_budget_spent' %}";
+const saveBudgetUrl = "{% url 'finance:save_budget' %}";
+</script>
+
+<script src="{% static 'js/budget.js' %}"></script>
+{% endblock %}

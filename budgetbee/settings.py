@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'finance',
     'userauths',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [

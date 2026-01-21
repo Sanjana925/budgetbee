@@ -4,7 +4,6 @@ from . import views
 app_name = 'finance'
 
 urlpatterns = [
-    # Home / Dashboard
     path('', views.home, name='home'),
     path('<int:year>/<int:month>/', views.home, name='home_month'),
 
@@ -29,4 +28,10 @@ urlpatterns = [
     path('chart/', views.chart, name='chart'),
     path('chart/<int:year>/<int:month>/', views.chart, name='chart_month'),
     path('settings/', views.settings, name='settings'),
+
+    # Budget
+    path('budget/', views.budget_default, name='budget_default'),
+    path('budget/<int:year>/<int:month>/', views.budget, name='budget'),
+    path('budget/save/', views.save_budget, name='save_budget'),
+    path('budget/spent/', views.get_budget_spent, name='get_budget_spent'),
 ]

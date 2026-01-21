@@ -30,7 +30,7 @@
         </div>
 
         <!-- Avatar -->
-        <div class="form-wrapper">
+        <div class="form-wrapper avatar-wrapper">
             <label for="avatar">Profile Avatar</label>
             {% if request.user.profile_image %}
                 <img src="{{ request.user.profile_image.url }}" alt="Avatar">
@@ -41,34 +41,27 @@
             <button type="submit" name="update_avatar">Update Avatar</button>
         </div>
 
-   <!-- Change Password Button -->
-<div class="form-wrapper">
-    <button type="button" id="open-password-modal" class="btn-change-password">
-        Change Password
-    </button>
-</div>
+        <!-- Change Password Button -->
+        <div class="form-wrapper">
+            <button type="button" id="open-password-modal" class="btn-change-password">
+                Change Password
+            </button>
+        </div>
+    </form>
 
-<!-- Password Modal -->
-<div id="password-modal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2>Change Password</h2>
+    <!-- Password Modal -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Change Password</h2>
 
-        {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                    <li class="{{ message.tags }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-
-        <form method="POST">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" name="change_password">Update Password</button>
-        </form>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" name="change_password">Update Password</button>
+            </form>
+        </div>
     </div>
-</div>
 
     <!-- Logout -->
     <form method="POST" action="{% url 'userauths:logout' %}" class="logout-form">
@@ -77,6 +70,7 @@
     </form>
 </div>
 {% endblock %}
+
 {% block extra_js %}
 <script src="{% static 'js/password.js' %}"></script>
 {% endblock %}

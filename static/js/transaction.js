@@ -1,45 +1,36 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
 
     // Open "New Transaction" modal
     const btn = document.getElementById("newTransactionBtn");
     if (btn) btn.addEventListener("click", () => openModal());
 
     // Delegated click handling
-    document.body.addEventListener("click", function (e) {
+    document.body.addEventListener("click", e => {
 
-        // ---------- Edit transaction ----------
+        // Edit transaction
         if (e.target.matches(".edit-transaction")) {
-            const txId = e.target.dataset.id;
-            openModal(txId);
+            openModal(e.target.dataset.id);
         }
 
-        // ---------- Delete transaction ----------
+        // Delete transaction
         if (e.target.matches(".delete-transaction")) {
-            const txId = e.target.dataset.id;
-            deleteTransaction(txId);
+            deleteTransaction(e.target.dataset.id);
         }
 
-        // ---------- Type toggle (Income/Expense) ----------
+        // Type toggle (Income/Expense)
         if (e.target.matches(".type-toggle .toggle-btn")) {
-            const btn = e.target;
-            const type = btn.dataset.type;
+            const type = e.target.dataset.type;
+            e.target.parentElement.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
+            e.target.classList.add("active");
 
-            // Activate clicked button
-            btn.parentElement.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-
-            // Update hidden input
             const typeInput = document.getElementById("typeInput");
             if (typeInput) typeInput.value = type;
 
-            // Filter category dropdown
             const categorySelect = document.getElementById("categorySelect");
             if (categorySelect) {
                 Array.from(categorySelect.options).forEach(opt => {
                     opt.style.display = opt.dataset.type === type ? "" : "none";
                 });
-
-                // Select first visible category automatically
                 const firstVisible = Array.from(categorySelect.options).find(o => o.style.display !== "none");
                 if (firstVisible) categorySelect.value = firstVisible.value;
             }
@@ -47,22 +38,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-// ---------------- CSRF Helper ----------------
+// CSRF Helper
 function getCSRFToken() {
     const name = "csrftoken";
     const cookies = document.cookie.split(";").map(c => c.trim());
-    for (let c of cookies) {
-        if (c.startsWith(name + "=")) return decodeURIComponent(c.slice(name.length + 1));
-    }
+    for (let c of cookies) if (c.startsWith(name + "=")) return decodeURIComponent(c.slice(name.length + 1));
     return null;
 }
 
-// ---------------- Open Modal ----------------
+// Open Modal
 function openModal(txId = null) {
     closeModal();
-
-    let url = "/transaction/";
-    if (txId) url = `/transaction/edit/${txId}/`;
+    let url = txId ? `/transaction/edit/${txId}/` : "/transaction/";
 
     fetch(url)
         .then(res => res.ok ? res.text() : Promise.reject("Failed to load modal"))
@@ -73,28 +60,22 @@ function openModal(txId = null) {
             const form = document.getElementById("transactionForm");
             if (!form) return;
 
-            // ---------- Set default type toggle and filter categories ----------
             const typeInput = document.getElementById("typeInput");
             const categorySelect = document.getElementById("categorySelect");
             if (typeInput && categorySelect) {
                 const defaultType = typeInput.value || "income";
-                const toggleBtns = document.querySelectorAll(".type-toggle .toggle-btn");
-
-                toggleBtns.forEach(btn => {
-                    const btnType = btn.dataset.type;
-                    btn.classList.toggle("active", btnType === defaultType);
+                document.querySelectorAll(".type-toggle .toggle-btn").forEach(btn => {
+                    btn.classList.toggle("active", btn.dataset.type === defaultType);
                 });
-
                 Array.from(categorySelect.options).forEach(opt => {
                     opt.style.display = opt.dataset.type === defaultType ? "" : "none";
                 });
-
                 const firstVisible = Array.from(categorySelect.options).find(o => o.style.display !== "none");
                 if (firstVisible) categorySelect.value = firstVisible.value;
             }
 
-            // ---------- Form submit ----------
-            form.addEventListener("submit", function (e) {
+            // Form submit
+            form.addEventListener("submit", e => {
                 e.preventDefault();
                 const data = new FormData(form);
                 const postUrl = txId ? `/transaction/edit/${txId}/` : "/transaction/";
@@ -105,18 +86,30 @@ function openModal(txId = null) {
                     headers: {
                         "X-Requested-With": "XMLHttpRequest",
                         "X-CSRFToken": getCSRFToken()
-                    },
+                    }
                 })
                 .then(res => res.json())
                 .then(res => {
                     if (res.success) {
                         updateTransactionList(res.transaction);
                         closeModal();
+
+                        // Dispatch event to update budgets
+                        window.dispatchEvent(new CustomEvent("transaction:changed", {
+                            detail: {
+                                transaction: {
+                                    category_id: res.transaction.category_id || res.transaction.category,
+                                    amount: parseFloat(res.transaction.amount),
+                                    type: (res.transaction.type || "expense").toLowerCase()
+                                },
+                                action: txId ? "edit" : "add"
+                            }
+                        }));
                     } else if (res.error === "login_required") {
                         window.location.href = "/userauths/login/";
                     } else {
+                        alert(res.error || "Failed to save transaction.");
                         console.error(res.error);
-                        alert(res.error);
                     }
                 })
                 .catch(err => console.error("Error submitting transaction:", err));
@@ -125,7 +118,7 @@ function openModal(txId = null) {
         .catch(err => console.error("Failed to load modal:", err));
 }
 
-// ---------------- Delete Transaction ----------------
+// Delete Transaction
 function deleteTransaction(txId) {
     if (!confirm("Are you sure you want to delete this transaction?")) return;
 
@@ -134,7 +127,7 @@ function deleteTransaction(txId) {
         headers: {
             "X-Requested-With": "XMLHttpRequest",
             "X-CSRFToken": getCSRFToken()
-        },
+        }
     })
     .then(res => res.json())
     .then(res => {
@@ -143,33 +136,42 @@ function deleteTransaction(txId) {
             if (txItem) {
                 const dateCard = txItem.closest(".date-card");
                 txItem.remove();
-                if (dateCard && dateCard.querySelectorAll(".transaction-item").length === 0) {
-                    dateCard.remove();
-                }
+                if (dateCard && dateCard.querySelectorAll(".transaction-item").length === 0) dateCard.remove();
+
                 updateTopSummary(res);
+
+                // Dispatch budget update
+                window.dispatchEvent(new CustomEvent("transaction:changed", {
+                    detail: {
+                        transaction: {
+                            category_id: res.category_id,
+                            amount: parseFloat(res.amount),
+                            type: "expense"
+                        },
+                        action: "delete"
+                    }
+                }));
             }
 
             const container = document.getElementById("transactionsContainer");
             const emptyState = document.getElementById("emptyState");
-            if (container && container.children.length === 0 && emptyState) {
-                emptyState.style.display = "flex";
-            }
+            if (container && container.children.length === 0 && emptyState) emptyState.style.display = "flex";
         } else {
+            alert(res.error || "Failed to delete transaction.");
             console.error(res.error);
-            alert(res.error);
         }
     })
     .catch(err => console.error("Error deleting transaction:", err));
 }
 
-// ---------------- Close Modal ----------------
+// Close Modal
 function closeModal() {
     const modal = document.getElementById("transactionModal");
     if (modal) modal.remove();
     document.body.classList.remove("modal-open");
 }
 
-// ---------------- Update Transaction List ----------------
+// Update Transaction List
 function updateTransactionList(tx) {
     if (!tx || !tx.date) return;
 
@@ -219,20 +221,16 @@ function updateTransactionList(tx) {
     updateTopSummary(tx);
 }
 
-// ---------------- Update Date Summary ----------------
+// Update Date Summary
 function updateDateSummary(dateCard) {
     if (!dateCard) return;
-
-    const items = dateCard.querySelectorAll(".transaction-item");
     let income = 0, expense = 0;
 
-    items.forEach(item => {
+    dateCard.querySelectorAll(".transaction-item").forEach(item => {
         const amtElem = item.querySelector(".amount");
         if (!amtElem) return;
 
-        const amtText = amtElem.textContent.replace(/[^\d.]/g, "");
-        const amt = parseFloat(amtText) || 0;
-
+        const amt = parseFloat(amtElem.textContent.replace(/[^\d.]/g, "")) || 0;
         if (amtElem.classList.contains("income")) income += amt;
         else expense += amt;
     });
@@ -241,7 +239,7 @@ function updateDateSummary(dateCard) {
     if (summary) summary.textContent = `Income: Rs. ${income.toFixed(2)} | Expense: Rs. ${expense.toFixed(2)}`;
 }
 
-// ---------------- Update Top Summary ----------------
+// Update Top Summary
 function updateTopSummary(data) {
     const amounts = document.querySelectorAll(".summary-left .amount");
     if (amounts.length >= 2) {
@@ -250,7 +248,5 @@ function updateTopSummary(data) {
     }
 
     const balanceElem = document.querySelector(".summary-right .balance-amount");
-    if (balanceElem) {
-        balanceElem.innerText = "Rs. " + parseFloat(data.balance || 0).toFixed(2);
-    }
+    if (balanceElem) balanceElem.innerText = "Rs. " + parseFloat(data.balance || 0).toFixed(2);
 }

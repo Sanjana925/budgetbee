@@ -30,12 +30,22 @@
         </div>
 
         <!-- Navigation Menu -->
-        <ul class="menu">
-            <li><a href="{% url 'finance:home' %}" class="{% if active == 'home' %}active{% endif %}">🏠 Home</a></li>
-            <li><a href="{% url 'finance:chart' %}" class="{% if active == 'chart' %}active{% endif %}">⏱️ Chart</a></li>
-            <li><a href="{% url 'finance:accounts' %}" class="{% if active == 'accounts' %}active{% endif %}">💳 Accounts</a></li>
-            <li><a href="{% url 'finance:category' %}" class="{% if active == 'category' %}active{% endif %}">📋 Category</a></li>
-        </ul>
+    <ul class="menu">
+    <li><a href="{% url 'finance:home' %}" class="{% if active == 'home' %}active{% endif %}">🏠 Home</a></li>
+    <li><a href="{% url 'finance:chart' %}" class="{% if active == 'chart' %}active{% endif %}">⏱️ Chart</a></li>
+    <li><a href="{% url 'finance:accounts' %}" class="{% if active == 'accounts' %}active{% endif %}">💳 Accounts</a></li>
+    <li><a href="{% url 'finance:category' %}" class="{% if active == 'category' %}active{% endif %}">📋 Category</a></li>
+<li>
+    <a href="{% url 'finance:budget_default' %}" 
+       class="{% if active == 'budget' %}active{% endif %}">
+       💰 Budget
+    </a>
+</li>
+
+</ul>
+
+
+       
 
         <!-- Settings -->
         <div class="settings">
