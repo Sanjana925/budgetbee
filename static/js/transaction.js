@@ -1,5 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+    // -------------------------------
+    // 1️⃣ Grab budget data from home.html
+    // -------------------------------
+    let budgetsData = {};
+    const budgetsEl = document.getElementById("budgetsData");
+    if (budgetsEl) {
+        budgetsData = JSON.parse(budgetsEl.textContent);
+        window.budgetsData = budgetsData; // store globally for alerts
+        console.log("💰 Loaded budgets data", budgetsData);
+    }
+
     // Open "New Transaction" modal
     const btn = document.getElementById("newTransactionBtn");
     if (btn) btn.addEventListener("click", () => openModal());
@@ -47,7 +58,6 @@ function getCSRFToken() {
 }
 
 // Open Modal
-// Open Modal
 function openModal(txId = null) {
     closeModal(); // close any existing modal
     let url = txId ? `/transaction/edit/${txId}/` : "/transaction/";
@@ -62,7 +72,6 @@ function openModal(txId = null) {
             const form = document.getElementById("transactionForm");
             if (!form) return console.error("❌ transactionForm not found");
 
-            // Add error container dynamically if not present
             if (!document.getElementById("formError")) {
                 const errorDiv = document.createElement("div");
                 errorDiv.id = "formError";
@@ -73,7 +82,6 @@ function openModal(txId = null) {
                 console.log("🛠️ Error container added");
             }
 
-            // Set up type and category selection
             const typeInput = document.getElementById("typeInput");
             const categorySelect = document.getElementById("categorySelect");
             if (typeInput && categorySelect) {
@@ -89,14 +97,13 @@ function openModal(txId = null) {
                 console.log(`📝 Default type set to: ${defaultType}`);
             }
 
-            // Form submit handling
             form.addEventListener("submit", e => {
                 e.preventDefault();
                 const data = new FormData(form);
                 const postUrl = txId ? `/transaction/edit/${txId}/` : "/transaction/";
 
                 const errorContainer = document.getElementById("formError");
-                if (errorContainer) errorContainer.style.display = "none"; // hide previous errors
+                if (errorContainer) errorContainer.style.display = "none";
 
                 console.log("📤 Submitting transaction form to:", postUrl);
 
@@ -112,13 +119,18 @@ function openModal(txId = null) {
                 .then(res => {
                     if (res.success) {
                         console.log("✅ Transaction saved:", res.transaction);
-
                         updateTransactionList(res.transaction);
+                        updateTopSummary(res);
 
-                        // Dispatch budget update
+                        // Update budgetsData if backend returns budget info
+                        if (res.budget) {
+                            window.budgetsData = window.budgetsData || {};
+                            window.budgetsData[res.budget.category_id] = res.budget;
+                        }
+
+                        // Dispatch event
                         const catId = res.transaction.category_id || res.transaction.category;
                         if (catId) {
-                            console.log("📤 Dispatching transaction:changed for category:", catId);
                             window.dispatchEvent(new CustomEvent("transaction:changed", {
                                 detail: {
                                     transaction: {
@@ -131,25 +143,16 @@ function openModal(txId = null) {
                             }));
                         }
 
-                        // Auto-hide modal after 1 second
-                        setTimeout(() => {
-                            closeModal();
-                            console.log("⏹ Modal auto-closed after transaction submit");
-                        }, 1000);
+                        setTimeout(() => closeModal(), 1000);
 
                     } else if (res.error === "login_required") {
                         console.warn("⚠️ Login required, redirecting...");
                         window.location.href = "/userauths/login/";
                     } else {
-                        // Show inline error
                         if (errorContainer) {
                             errorContainer.textContent = res.error || "Failed to save transaction.";
                             errorContainer.style.display = "block";
-                            console.error("❌ Transaction error:", res.error);
-
-                            setTimeout(() => {
-                                if (errorContainer) errorContainer.style.display = "none";
-                            }, 5000);
+                            setTimeout(() => { errorContainer.style.display = "none"; }, 5000);
                         }
                     }
                 })
@@ -185,24 +188,26 @@ function deleteTransaction(txId) {
                 const dateCard = txItem.closest(".date-card");
                 txItem.remove();
                 if (dateCard && dateCard.querySelectorAll(".transaction-item").length === 0) dateCard.remove();
-
-                updateTopSummary(res);
-
-                window.dispatchEvent(new CustomEvent("transaction:changed", {
-                    detail: {
-                        transaction: {
-                            category_id: res.category_id,
-                            amount: parseFloat(res.amount),
-                            type: "expense"
-                        },
-                        action: "delete"
-                    }
-                }));
             }
 
-            const container = document.getElementById("transactionsContainer");
-            const emptyState = document.getElementById("emptyState");
-            if (container && container.children.length === 0 && emptyState) emptyState.style.display = "flex";
+            updateTopSummary(res);
+
+            // Update budgetsData if backend returns budget info
+            if (res.budget) {
+                window.budgetsData = window.budgetsData || {};
+                window.budgetsData[res.budget.category_id] = res.budget;
+            }
+
+            window.dispatchEvent(new CustomEvent("transaction:changed", {
+                detail: {
+                    transaction: {
+                        category_id: res.category_id,
+                        amount: parseFloat(res.amount),
+                        type: "expense"
+                    },
+                    action: "delete"
+                }
+            }));
         } else {
             alert(res.error || "Failed to delete transaction.");
             console.error(res.error);
@@ -217,9 +222,6 @@ function closeModal() {
     if (modal) modal.remove();
     document.body.classList.remove("modal-open");
 }
-
-// The rest of your transaction update and summary functions remain unchanged...
-
 
 // Update Transaction List
 function updateTransactionList(tx) {
@@ -268,7 +270,6 @@ function updateTransactionList(tx) {
     `;
 
     updateDateSummary(dateCard);
-    updateTopSummary(tx);
 }
 
 // Update Date Summary
@@ -299,4 +300,47 @@ function updateTopSummary(data) {
 
     const balanceElem = document.querySelector(".summary-right .balance-amount");
     if (balanceElem) balanceElem.innerText = "Rs. " + parseFloat(data.balance || 0).toFixed(2);
+}
+
+// -------------------------------
+// 🔔 Budget Alert: show alert if exceeded
+// -------------------------------
+window.addEventListener("transaction:changed", e => {
+    const { transaction } = e.detail;
+
+    if (!window.budgetsData) return;
+
+    const budget = window.budgetsData[transaction.category_id];
+    if (!budget) return;
+
+    // ✅ budget.spent already updated from backend (res.budget)
+    showBudgetAlert(budget, transaction.category_id);
+
+});
+window.shownBudgetAlerts = new Set();
+
+function showBudgetAlert(budget, categoryId) {
+    if (!budget.budget || budget.budget <= 0) return; // 🛡️ safety
+
+    const percent = (budget.spent / budget.budget) * 100;
+
+    // 🧹 RESET alerts if budget drops below 90%
+    if (percent < 90) {
+        window.shownBudgetAlerts.delete(`${categoryId}-warn`);
+        window.shownBudgetAlerts.delete(`${categoryId}-full`);
+        return;
+    }
+
+    const key = `${categoryId}-${percent >= 100 ? "full" : "warn"}`;
+
+    // 🚫 prevent duplicate alerts
+    if (window.shownBudgetAlerts.has(key)) return;
+
+    if (percent >= 100) {
+        alert(`🚨 Budget limit reached for "${budget.name}"`);
+    } else if (percent >= 90) {
+        alert(`⚠️ "${budget.name}" budget is about to reach its limit`);
+    }
+
+    window.shownBudgetAlerts.add(key);
 }

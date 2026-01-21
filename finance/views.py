@@ -10,7 +10,6 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
 from django.db.models import Sum
 
 from .forms import AccountForm, CategoryForm, TransactionForm
@@ -21,17 +20,6 @@ from .constants import (
     DEFAULT_CATEGORIES, DEFAULT_CATEGORY_ICONS, DEFAULT_CATEGORY_COLORS
 )
 from .signals import recalc_account_balance
-
-# ---------------- Month Navigation Helpers ----------------
-def prev_month(year, month):
-    if month == 1:
-        return year - 1, 12
-    return year, month - 1
-
-def next_month(year, month):
-    if month == 12:
-        return year + 1, 1
-    return year, month + 1
 
 # ---------------- Home Dashboard ----------------
 def home(request, year=None, month=None):
@@ -77,62 +65,9 @@ def home(request, year=None, month=None):
         "is_authenticated": bool(user),
     })
 
-# ---------------- Charts ----------------
-def chart(request, year=None, month=None):
-    user = get_user_or_guest(request.user)
-    today = date.today()
-    year = int(year) if year else today.year
-    month = int(month) if month else today.month
-    month_start = date(year, month, 1)
-    month_end = date(year, month, monthrange(year, month)[1])
-
-    if not user:
-        return render(request, 'finance/chart.html', {
-            'active': 'chart',
-            'income_json': '{}',
-            'expense_json': '{}',
-            'monthly_json': '[]',
-            'category_colors_json': '{}',
-            'current_year': year,
-            'current_month': month,
-            'is_authenticated': False,
-        })
-
-    txs = Transaction.objects.filter(account__user=user, date__range=(month_start, month_end)).select_related('category')
-    income_data, expense_data = defaultdict(float), defaultdict(float)
-    monthly_totals = []
-
-    for tx in txs:
-        cat_name = tx.category.name
-        if tx.type == "income":
-            income_data[cat_name] += float(tx.amount)
-        else:
-            expense_data[cat_name] += float(tx.amount)
-
-        date_str = str(tx.date)
-        entry = next((x for x in monthly_totals if x["date"] == date_str), None)
-        if not entry:
-            entry = {"date": date_str, "income": 0, "expense": 0}
-            monthly_totals.append(entry)
-        if tx.type == "income":
-            entry["income"] += float(tx.amount)
-        else:
-            entry["expense"] += float(tx.amount)
-
-    category_colors = {c.name: c.color for c in Category.objects.filter(user=user)}
-
-    return render(request, 'finance/chart.html', {
-        'active': 'chart',
-        'income_json': json.dumps(income_data),
-        'expense_json': json.dumps(expense_data),
-        'monthly_json': json.dumps(monthly_totals),
-        'category_colors_json': json.dumps(category_colors),
-        'current_year': year,
-        'current_month': month,
-        'is_authenticated': True,
-    })
 
 # ---------------- Transactions CRUD ----------------
+@login_required
 def add_transaction(request):
     user = get_user_or_guest(request.user)
     if not user:
@@ -144,10 +79,31 @@ def add_transaction(request):
             tx = form.save(commit=False)
             tx.account = Account.objects.get(id=request.POST.get("account"), user=user)
             tx.category = Category.objects.get(id=request.POST.get("category"), user=user)
-            tx.user = user  # ✅ assign the user
+            tx.user = user
             tx.save()
 
+            # Recalculate totals
             total_income, total_expense, total_balance = calculate_totals(user)
+
+            # Budget info
+            budget_obj = Budget.objects.filter(
+                user=user,
+                category=tx.category,
+                month=tx.date.month,
+                year=tx.date.year
+            ).first()
+
+            # Total spent in category this month
+            spent = Transaction.objects.filter(
+                user=user,
+                type='expense',
+                category=tx.category,
+                date__year=tx.date.year,
+                date__month=tx.date.month
+            ).aggregate(total=Sum('amount'))['total'] or 0
+
+            budget_amount = float(budget_obj.amount) if budget_obj else 0
+            category_spent = spent  # ✅ fixed undefined variable
 
             return JsonResponse({
                 "success": True,
@@ -162,12 +118,21 @@ def add_transaction(request):
                     "category_name": tx.category.name,
                     "category_icon": tx.category.icon,
                     "date": str(tx.date),
-                    "note": tx.note
+                    "note": tx.note,
+                    "category_spent": float(category_spent),
+                },
+                "budget": {
+                    "category_id": tx.category.id,
+                    "spent": float(spent),
+                    "budget": budget_amount,
+                    "name": tx.category.name,
+                    "icon": tx.category.icon,
+                    "exceeded": budget_amount > 0 and spent > budget_amount
                 }
             })
-        return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
 
-    # Render transaction page with budgets
+        return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
+    # Non-AJAX GET rendering
     accounts = Account.objects.filter(user=user)
     categories = Category.objects.filter(user=user)
     budgets = {}
@@ -176,7 +141,11 @@ def add_transaction(request):
     txs = Transaction.objects.filter(user=user, type='expense', date__month=month, date__year=year)
     for b in Budget.objects.filter(user=user, month=month, year=year):
         spent = txs.filter(category=b.category).aggregate(total=Sum('amount'))['total'] or 0
-        budgets[str(b.category.id)] = {'budget': float(b.amount), 'spent': float(spent)}
+        budgets[str(b.category.id)] = {
+            "budget": float(b.amount),
+            "spent": float(spent),
+            "exceeded": spent > float(b.amount)
+        }
 
     return render(request, 'finance/transaction.html', {
         "accounts": accounts,
@@ -184,7 +153,6 @@ def add_transaction(request):
         "today": today,
         "budgets_json": json.dumps(budgets),
     })
-
 
 @login_required
 def edit_transaction(request, transaction_id):
@@ -194,16 +162,63 @@ def edit_transaction(request, transaction_id):
         # Save old values before updating
         old_amount = float(tx.amount)
         old_category_id = tx.category.id if tx.category else None
+        old_date = tx.date
 
         form = TransactionForm(request.POST, instance=tx)
         if form.is_valid():
             tx = form.save(commit=False)
             tx.account = Account.objects.get(id=request.POST.get("account"), user=request.user)
             tx.category = Category.objects.get(id=request.POST.get("category"), user=request.user)
-            tx.user = request.user  # ✅ assign the user
+            tx.user = request.user
             tx.save()
 
             total_income, total_expense, total_balance = calculate_totals(request.user)
+
+            # Spent for new category
+            new_category_spent = Transaction.objects.filter(
+                user=request.user,
+                type='expense',
+                category=tx.category,
+                date__year=tx.date.year,
+                date__month=tx.date.month
+            ).aggregate(total=Sum('amount'))['total'] or 0
+
+            # Budget info for new category
+            budget_obj = Budget.objects.filter(
+                user=request.user,
+                category=tx.category,
+                month=tx.date.month,
+                year=tx.date.year
+            ).first()
+            new_budget_amount = float(budget_obj.amount) if budget_obj else 0
+            new_exceeded = new_budget_amount > 0 and new_category_spent > new_budget_amount
+
+            # If category changed, get old category spent & budget
+            old_category_data = None
+            if old_category_id and old_category_id != tx.category.id:
+                old_category_spent = Transaction.objects.filter(
+                    user=request.user,
+                    type='expense',
+                    category_id=old_category_id,
+                    date__year=old_date.year,
+                    date__month=old_date.month
+                ).aggregate(total=Sum('amount'))['total'] or 0
+
+                old_budget_obj = Budget.objects.filter(
+                    user=request.user,
+                    category_id=old_category_id,
+                    month=old_date.month,
+                    year=old_date.year
+                ).first()
+                old_budget_amount = float(old_budget_obj.amount) if old_budget_obj else 0
+                old_exceeded = old_budget_amount > 0 and old_category_spent > old_budget_amount
+
+                old_category_data = {
+                    "category_id": old_category_id,
+                    "spent": float(old_category_spent),
+                    "budget": old_budget_amount,
+                    "exceeded": old_exceeded
+                }
 
             return JsonResponse({
                 "success": True,
@@ -221,7 +236,17 @@ def edit_transaction(request, transaction_id):
                     "old_amount": old_amount,
                     "old_category_id": old_category_id,
                     "note": tx.note,
-                }
+                    "category_spent": float(new_category_spent)
+                },
+                "budget": {
+                    "category_id": tx.category.id,
+                    "spent": float(new_category_spent),
+                    "budget": new_budget_amount,
+                    "name": tx.category.name,
+                    "icon": tx.category.icon,
+                    "exceeded": new_exceeded
+                },
+                "old_category_budget": old_category_data  # ✅ for front-end to update old category
             })
         return JsonResponse({"success": False, "error": form.errors.as_json()}, status=400)
 
@@ -229,69 +254,48 @@ def edit_transaction(request, transaction_id):
 def delete_transaction(request, transaction_id):
     tx = get_object_or_404(Transaction, id=transaction_id, account__user=request.user)
     if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        category = tx.category
+        tx_date = tx.date
         tx.delete()
+
         total_income, total_expense, total_balance = calculate_totals(request.user)
+        category_spent = calculate_category_spent(request.user, category.id)  # ✅ fixed
+
+        # Budget info
+        budget_obj = Budget.objects.filter(
+            user=request.user,
+            category=category,
+            month=tx_date.month,
+            year=tx_date.year
+        ).first()
+        spent = Transaction.objects.filter(
+            user=request.user,
+            type='expense',
+            category=category,
+            date__year=tx_date.year,
+            date__month=tx_date.month
+        ).aggregate(total=Sum('amount'))['total'] or 0
+        budget_amount = float(budget_obj.amount) if budget_obj else 0
+
         return JsonResponse({
             "success": True,
             "amount": float(tx.amount),
-            "category_id": tx.category.id,
+            "category_id": category.id,
+            "category_spent": float(category_spent),
             "total_income": float(total_income),
             "total_expense": float(total_expense),
             "balance": float(total_balance),
-            "transaction_id": transaction_id
+            "transaction_id": transaction_id,
+            "budget": {
+                "category_id": category.id,
+                "spent": float(spent),
+                "budget": budget_amount,
+                "name": category.name,
+                "icon": category.icon,
+                "exceeded": budget_amount > 0 and spent > budget_amount
+            }
         })
-    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-# ---------------- Categories CRUD ----------------
-def category(request):
-    ctype = request.GET.get('type', 'expense')
-    user = get_user_or_guest(request.user)
-
-    if user:
-        categories = Category.objects.filter(user=user, type=ctype)
-    else:
-        categories = [
-            {"id": i+1, "name": name, "icon": icon, "color": color}
-            for i, (name, icon, color) in enumerate(DEFAULT_CATEGORIES.get(ctype, []))
-        ]
-
-    return render(request, 'finance/category.html', {
-        "categories": categories,
-        "category_type": ctype,
-        "is_authenticated": bool(user),
-        "default_category_icons": DEFAULT_CATEGORY_ICONS,
-        "default_category_colors": DEFAULT_CATEGORY_COLORS,
-    })
-
-@login_required
-def add_category(request):
-    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        form = CategoryForm(request.POST)
-        if form.is_valid():
-            cat = form.save(commit=False)
-            cat.user = request.user
-            cat.save()
-            return JsonResponse({"success": True})
-        return JsonResponse({"success": False, "error": form.errors.as_json()})
-    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
-
-@login_required
-def edit_category(request, category_id):
-    category = get_object_or_404(Category, id=category_id, user=request.user)
-    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        form = CategoryForm(request.POST, instance=category)
-        if form.is_valid():
-            form.save()
-            return JsonResponse({"success": True})
-        return JsonResponse({"success": False, "error": form.errors.as_json()})
-    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
-
-@login_required
-def delete_category(request, category_id):
-    category = get_object_or_404(Category, id=category_id, user=request.user)
-    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        category.delete()
-        return JsonResponse({"success": True})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
 # ---------------- Accounts CRUD ----------------
@@ -365,27 +369,124 @@ def delete_account(request, account_id):
         return JsonResponse({"success": True})
     return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
 
-# ---------------- Settings ----------------
-def settings(request):
+
+# ---------------- Categories CRUD ----------------
+def category(request):
+    ctype = request.GET.get('type', 'expense')
     user = get_user_or_guest(request.user)
+
+    if user:
+        categories = Category.objects.filter(user=user, type=ctype)
+    else:
+        categories = [
+            {"id": i+1, "name": name, "icon": icon, "color": color}
+            for i, (name, icon, color) in enumerate(DEFAULT_CATEGORIES.get(ctype, []))
+        ]
+
+    return render(request, 'finance/category.html', {
+        "categories": categories,
+        "category_type": ctype,
+        "is_authenticated": bool(user),
+        "default_category_icons": DEFAULT_CATEGORY_ICONS,
+        "default_category_colors": DEFAULT_CATEGORY_COLORS,
+    })
+
+@login_required
+def add_category(request):
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            cat = form.save(commit=False)
+            cat.user = request.user
+            cat.save()
+            return JsonResponse({"success": True})
+        return JsonResponse({"success": False, "error": form.errors.as_json()})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
+@login_required
+def edit_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id, user=request.user)
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({"success": True})
+        return JsonResponse({"success": False, "error": form.errors.as_json()})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
+@login_required
+def delete_category(request, category_id):
+    category = get_object_or_404(Category, id=category_id, user=request.user)
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        category.delete()
+        return JsonResponse({"success": True})
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
+
+
+    
+# ---------------- Charts ----------------
+def chart(request, year=None, month=None):
+    user = get_user_or_guest(request.user)
+    today = date.today()
+    year = int(year) if year else today.year
+    month = int(month) if month else today.month
+    month_start = date(year, month, 1)
+    month_end = date(year, month, monthrange(year, month)[1])
+
     if not user:
-        messages.warning(request, "You must be logged in to access settings.")
-        return redirect('userauths:login')
-    return render(request, 'finance/settings.html', {'active': 'settings'})
+        return render(request, 'finance/chart.html', {
+            'active': 'chart',
+            'income_json': '{}',
+            'expense_json': '{}',
+            'monthly_json': '[]',
+            'category_colors_json': '{}',
+            'current_year': year,
+            'current_month': month,
+            'is_authenticated': False,
+        })
+
+    txs = Transaction.objects.filter(account__user=user, date__range=(month_start, month_end)).select_related('category')
+    income_data, expense_data = defaultdict(float), defaultdict(float)
+    monthly_totals = []
+
+    for tx in txs:
+        cat_name = tx.category.name
+        if tx.type == "income":
+            income_data[cat_name] += float(tx.amount)
+        else:
+            expense_data[cat_name] += float(tx.amount)
+
+        date_str = str(tx.date)
+        entry = next((x for x in monthly_totals if x["date"] == date_str), None)
+        if not entry:
+            entry = {"date": date_str, "income": 0, "expense": 0}
+            monthly_totals.append(entry)
+        if tx.type == "income":
+            entry["income"] += float(tx.amount)
+        else:
+            entry["expense"] += float(tx.amount)
+
+    category_colors = {c.name: c.color for c in Category.objects.filter(user=user)}
+
+    return render(request, 'finance/chart.html', {
+        'active': 'chart',
+        'income_json': json.dumps(income_data),
+        'expense_json': json.dumps(expense_data),
+        'monthly_json': json.dumps(monthly_totals),
+        'category_colors_json': json.dumps(category_colors),
+        'current_year': year,
+        'current_month': month,
+        'is_authenticated': True,
+    })
+
+
+
 
 # ---------------- Budget Views ----------------
 def budget_default(request):
     today = date.today()
     return redirect('finance:budget', year=today.year, month=today.month)
-from collections import defaultdict
-from datetime import date
-from calendar import monthrange
-from decimal import Decimal
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render
-from django.http import JsonResponse
-from django.db.models import Sum
-from .models import Category, Transaction, Budget
 
 @login_required
 def budget(request, year=None, month=None):
@@ -401,14 +502,14 @@ def budget(request, year=None, month=None):
     # Categories
     categories_qs = Category.objects.filter(user=user, type="expense").order_by("name")
 
-    # Transactions for this month
+    # Transactions
     transactions = Transaction.objects.filter(user=user, type="expense", date__range=(month_start, month_end))
     spent_map = defaultdict(Decimal)
     for tx in transactions:
         if tx.category_id:
             spent_map[tx.category_id] += tx.amount
 
-    # Budgets for this month
+    # Budgets
     budgets_qs = Budget.objects.filter(user=user, month=month, year=year)
     budget_map = {b.category_id: b.amount for b in budgets_qs}
 
@@ -437,11 +538,9 @@ def budget(request, year=None, month=None):
             "icon": cat.icon,
         }
 
-    # Prev/Next month for navigation
-    prev_month = month-1 or 12
-    prev_year = year-1 if month == 1 else year
-    next_month = month+1 if month < 12 else 1
-    next_year = year+1 if month == 12 else year
+    # Prev/Next month navigation using helpers
+    prev_year, prev_month_num = prev_month(year, month)
+    next_year, next_month_num = next_month(year, month)
 
     context = {
         "active": "budget",
@@ -450,11 +549,60 @@ def budget(request, year=None, month=None):
         "current_year": year,
         "current_month": month,
         "prev_year": prev_year,
-        "prev_month": prev_month,
+        "prev_month": prev_month_num,
         "next_year": next_year,
-        "next_month": next_month,
+        "next_month": next_month_num,
     }
     return render(request, "finance/budget.html", context)
+
+
+# ---------------- get_budget_spent (consistency fix) ----------------
+@login_required
+def get_budget_spent(request):
+    if request.method != "POST" or request.headers.get("x-requested-with") != "XMLHttpRequest":
+        return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
+    category_id = request.POST.get("category")
+    month = request.POST.get("month")
+    year = request.POST.get("year")
+
+    if not all([category_id, month, year]):
+        return JsonResponse({"success": False, "error": "Missing fields"}, status=400)
+
+    try:
+        category_id = int(category_id)
+        month = int(month)
+        year = int(year)
+    except:
+        return JsonResponse({"success": False, "error": "Invalid data"}, status=400)
+
+    category = get_object_or_404(Category, id=category_id, user=request.user, type="expense")
+
+    # Budget for this category/month/year
+    budget_obj = Budget.objects.filter(user=request.user, category=category, month=month, year=year).first()
+    budget_amount = float(budget_obj.amount) if budget_obj else 0
+
+    # Total spent
+    spent = Transaction.objects.filter(
+        user=request.user,
+        type="expense",
+        category=category,
+        date__year=year,
+        date__month=month
+    ).aggregate(total=Sum("amount"))["total"] or 0
+
+    percent = int(min((spent / budget_amount * 100) if budget_amount > 0 else 0, 100))
+    exceeded = budget_amount > 0 and spent > budget_amount  # ✅ consistency fix
+
+    return JsonResponse({
+        "success": True,
+        "spent": float(spent),
+        "budget": budget_amount,
+        "percent": percent,
+        "exceeded": exceeded,
+        "name": category.name,
+        "icon": category.icon,
+    })
 
 @login_required
 def save_budget(request):
@@ -508,49 +656,36 @@ def save_budget(request):
         "name": category.name,
         "icon": category.icon,
     })
-@login_required
-def get_budget_spent(request):
-    if request.method != "POST" or request.headers.get("x-requested-with") != "XMLHttpRequest":
-        return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+  
+def calculate_category_spent(user, category_id):
+    total = (
+        Transaction.objects.filter(
+            user=user,
+            category_id=category_id,
+            type="expense"
+        )
+        .aggregate(total=Sum("amount"))["total"]
+    )
+    return Decimal(total or 0)
 
-    category_id = request.POST.get("category")
-    month = request.POST.get("month")
-    year = request.POST.get("year")
 
-    if not all([category_id, month, year]):
-        return JsonResponse({"success": False, "error": "Missing fields"}, status=400)
+# ---------------- Month Navigation Helpers ----------------
+def prev_month(year, month):
+    if month == 1:
+        return year - 1, 12
+    return year, month - 1
 
-    try:
-        category_id = int(category_id)
-        month = int(month)
-        year = int(year)
-    except:
-        return JsonResponse({"success": False, "error": "Invalid data"}, status=400)
+def next_month(year, month):
+    if month == 12:
+        return year + 1, 1
+    return year, month + 1
 
-    category = get_object_or_404(Category, id=category_id, user=request.user, type="expense")
 
-    # Budget for this category/month/year
-    budget_obj = Budget.objects.filter(user=request.user, category=category, month=month, year=year).first()
-    budget_amount = budget_obj.amount if budget_obj else 0
 
-    # Total spent
-    spent = Transaction.objects.filter(
-        user=request.user,
-        type="expense",
-        category=category,
-        date__year=year,
-        date__month=month
-    ).aggregate(total=Sum("amount"))["total"] or 0
-
-    percent = int(min((spent / budget_amount * 100) if budget_amount else 0, 100))
-    exceeded = spent >= budget_amount if budget_amount else False
-
-    return JsonResponse({
-        "success": True,
-        "spent": float(spent),
-        "budget": float(budget_amount),
-        "percent": percent,
-        "exceeded": exceeded,
-        "name": category.name,
-        "icon": category.icon,
-    })
+# ---------------- Settings ----------------
+def settings(request):
+    user = get_user_or_guest(request.user)
+    if not user:
+        messages.warning(request, "You must be logged in to access settings.")
+        return redirect('userauths:login')
+    return render(request, 'finance/settings.html', {'active': 'settings'})

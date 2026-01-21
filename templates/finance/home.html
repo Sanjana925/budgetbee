@@ -96,6 +96,10 @@
 {% endblock %}
 
 {% block extra_js %}
+{% if request.user.is_authenticated %}
+    {{ budgets_json|json_script:"budgetsData" }}
+{% endif %}
+
 <script src="{% static 'js/transaction.js' %}"></script>
 <script src="{% static 'js/home.js' %}"></script>
 {% endblock %}
