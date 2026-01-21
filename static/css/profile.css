@@ -6,27 +6,26 @@
     display: flex;
     flex-direction: column;
     font-family: 'Roboto', sans-serif;
-  /* reduce overall gap slightly */
 }
 
 /* Reduce space between h1 and first form-wrapper */
 .profile-inner-container h1 {
-    margin-bottom: 10px; /* smaller margin below the heading */
-    font-size: 1.8rem; /* optional: slightly smaller to fit better */
+    margin-bottom: 10px;
+    font-size: 1.8rem;
 }
 
 /* Messages */
 .messages {
     list-style: none;
     padding: 0;
-    margin-bottom: 10px; /* reduce message space */
+    margin-bottom: 10px;
 }
 .messages li {
     padding: 10px 12px;
     margin-bottom: 8px;
     border-radius: 6px;
     font-weight: 500;
-    font-size: 0.9rem; /* slightly smaller */
+    font-size: 0.9rem;
 }
 .messages li.success { background-color: #d4edda; color: #155724; }
 .messages li.error { background-color: #f8d7da; color: #721c24; }
@@ -37,12 +36,12 @@
 .form-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 8px; /* slightly tighter */
+    gap: 8px;
 }
 
 /* Extra spacing for avatar */
 .avatar-wrapper {
-    margin-top: 15px; /* smaller space above avatar section */
+    margin-top: 15px;
 }
 
 /* Labels */
@@ -57,7 +56,7 @@
 .form-wrapper input[type="file"],
 .form-wrapper input[type="password"] {
     width: 100%;
-    padding: 10px 12px; /* slightly smaller */
+    padding: 10px 12px;
     border-radius: 6px;
     border: 1px solid #ccc;
     font-size: 0.95rem;
@@ -76,14 +75,14 @@
     align-self: flex-start;
     background-color: var(--color-primary, #3498db);
     color: #fff;
-    padding: 8px 14px; /* smaller */
+    padding: 8px 14px;
     border-radius: 6px;
     font-weight: 600;
     border: none;
     cursor: pointer;
     transition: background-color 0.2s;
     font-size: 0.95rem;
-     margin-bottom: 12px; 
+    margin-bottom: 12px;
 }
 
 .form-wrapper button:hover,
@@ -95,14 +94,13 @@
 .logout-btn {
     background-color: #e74c3c;
     color: #fff;
-    padding: 8px 14px; /* smaller */
+    padding: 8px 14px;
     border-radius: 6px;
     font-weight: 600;
     border: none;
     cursor: pointer;
     transition: background-color 0.2s;
     font-size: 0.95rem;
-    
 }
 
 .logout-btn:hover {
@@ -111,7 +109,7 @@
 
 /* Avatar preview */
 .form-wrapper img {
-    width: 100px; /* slightly smaller */
+    width: 100px;
     height: 100px;
     border-radius: 50%;
     object-fit: cover;
@@ -144,7 +142,7 @@
 .modal-content {
     background-color: #fff;
     margin: 8% auto;
-    padding: 20px 25px; /* smaller padding */
+    padding: 20px 25px;
     border-radius: 12px;
     width: 90%;
     max-width: 450px;
@@ -158,7 +156,7 @@
     position: absolute;
     top: 12px;
     right: 16px;
-    font-size: 22px; /* slightly smaller */
+    font-size: 22px;
     font-weight: bold;
     color: #333;
     cursor: pointer;

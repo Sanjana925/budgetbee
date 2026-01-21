@@ -144,7 +144,9 @@ def add_transaction(request):
             tx = form.save(commit=False)
             tx.account = Account.objects.get(id=request.POST.get("account"), user=user)
             tx.category = Category.objects.get(id=request.POST.get("category"), user=user)
+            tx.user = user  # ✅ assign the user
             tx.save()
+
             total_income, total_expense, total_balance = calculate_totals(user)
 
             return JsonResponse({
@@ -156,7 +158,7 @@ def add_transaction(request):
                     "id": tx.id,
                     "amount": float(tx.amount),
                     "type": tx.type,
-                    "category_id": tx.category.id, 
+                    "category_id": tx.category.id,
                     "category_name": tx.category.name,
                     "category_icon": tx.category.icon,
                     "date": str(tx.date),
@@ -182,6 +184,8 @@ def add_transaction(request):
         "today": today,
         "budgets_json": json.dumps(budgets),
     })
+
+
 @login_required
 def edit_transaction(request, transaction_id):
     tx = get_object_or_404(Transaction, id=transaction_id, account__user=request.user)
@@ -196,7 +200,9 @@ def edit_transaction(request, transaction_id):
             tx = form.save(commit=False)
             tx.account = Account.objects.get(id=request.POST.get("account"), user=request.user)
             tx.category = Category.objects.get(id=request.POST.get("category"), user=request.user)
+            tx.user = request.user  # ✅ assign the user
             tx.save()
+
             total_income, total_expense, total_balance = calculate_totals(request.user)
 
             return JsonResponse({
@@ -208,7 +214,7 @@ def edit_transaction(request, transaction_id):
                     "id": tx.id,
                     "amount": float(tx.amount),
                     "type": tx.type,
-                    "category_id": tx.category.id, 
+                    "category_id": tx.category.id,
                     "category_name": tx.category.name,
                     "category_icon": tx.category.icon,
                     "date": str(tx.date),

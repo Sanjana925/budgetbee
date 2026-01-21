@@ -5,6 +5,7 @@
 
         <form method="POST" id="transactionForm">
             {% csrf_token %}
+            <div id="formError" class="form-error" style="display:none; color:#e53935; margin-bottom:10px;"></div>
 
             <!-- Type Toggle -->
             <div class="type-toggle">
@@ -22,14 +23,12 @@
             </div>
 
             <label>Amount</label>
-            <input type="number" step="0.01" name="amount"
-                   value="{{ transaction.amount|default:'' }}" required>
+            <input type="number" step="0.01" name="amount" value="{{ transaction.amount|default:'' }}" required>
 
             <label>Account</label>
             <select name="account" required>
                 {% for acc in accounts %}
-                    <option value="{{ acc.id }}"
-                        {% if transaction and transaction.account.id == acc.id %}selected{% endif %}>
+                    <option value="{{ acc.id }}" {% if transaction and transaction.account.id == acc.id %}selected{% endif %}>
                         {{ acc.icon }} {{ acc.name }}
                     </option>
                 {% endfor %}
@@ -50,9 +49,7 @@
                    value="{{ transaction.date|date:'Y-m-d'|default:today|date:'Y-m-d' }}" required>
 
             <label>Note</label>
-            <input type="text" name="note"
-                   value="{{ transaction.note|default:'' }}"
-                   placeholder="Optional">
+            <input type="text" name="note" value="{{ transaction.note|default:'' }}" placeholder="Optional">
 
             <div class="modal-actions">
                 <button type="button" onclick="closeModal()">Cancel</button>

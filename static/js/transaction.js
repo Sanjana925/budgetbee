@@ -47,8 +47,9 @@ function getCSRFToken() {
 }
 
 // Open Modal
+// Open Modal
 function openModal(txId = null) {
-    closeModal();
+    closeModal(); // close any existing modal
     let url = txId ? `/transaction/edit/${txId}/` : "/transaction/";
 
     fetch(url)
@@ -56,10 +57,23 @@ function openModal(txId = null) {
         .then(html => {
             document.body.insertAdjacentHTML("beforeend", html);
             document.body.classList.add("modal-open");
+            console.log("📦 Transaction modal loaded");
 
             const form = document.getElementById("transactionForm");
-            if (!form) return;
+            if (!form) return console.error("❌ transactionForm not found");
 
+            // Add error container dynamically if not present
+            if (!document.getElementById("formError")) {
+                const errorDiv = document.createElement("div");
+                errorDiv.id = "formError";
+                errorDiv.style.color = "#e53935";
+                errorDiv.style.margin = "10px 0";
+                errorDiv.style.display = "none";
+                form.prepend(errorDiv);
+                console.log("🛠️ Error container added");
+            }
+
+            // Set up type and category selection
             const typeInput = document.getElementById("typeInput");
             const categorySelect = document.getElementById("categorySelect");
             if (typeInput && categorySelect) {
@@ -72,13 +86,19 @@ function openModal(txId = null) {
                 });
                 const firstVisible = Array.from(categorySelect.options).find(o => o.style.display !== "none");
                 if (firstVisible) categorySelect.value = firstVisible.value;
+                console.log(`📝 Default type set to: ${defaultType}`);
             }
 
-            // Form submit
+            // Form submit handling
             form.addEventListener("submit", e => {
                 e.preventDefault();
                 const data = new FormData(form);
                 const postUrl = txId ? `/transaction/edit/${txId}/` : "/transaction/";
+
+                const errorContainer = document.getElementById("formError");
+                if (errorContainer) errorContainer.style.display = "none"; // hide previous errors
+
+                console.log("📤 Submitting transaction form to:", postUrl);
 
                 fetch(postUrl, {
                     method: "POST",
@@ -91,31 +111,59 @@ function openModal(txId = null) {
                 .then(res => res.json())
                 .then(res => {
                     if (res.success) {
-                        updateTransactionList(res.transaction);
-                        closeModal();
+                        console.log("✅ Transaction saved:", res.transaction);
 
-                        // Dispatch event to update budgets
-                        window.dispatchEvent(new CustomEvent("transaction:changed", {
-                            detail: {
-                                transaction: {
-                                    category_id: res.transaction.category_id || res.transaction.category,
-                                    amount: parseFloat(res.transaction.amount),
-                                    type: (res.transaction.type || "expense").toLowerCase()
-                                },
-                                action: txId ? "edit" : "add"
-                            }
-                        }));
+                        updateTransactionList(res.transaction);
+
+                        // Dispatch budget update
+                        const catId = res.transaction.category_id || res.transaction.category;
+                        if (catId) {
+                            console.log("📤 Dispatching transaction:changed for category:", catId);
+                            window.dispatchEvent(new CustomEvent("transaction:changed", {
+                                detail: {
+                                    transaction: {
+                                        category_id: String(catId),
+                                        amount: parseFloat(res.transaction.amount),
+                                        type: (res.transaction.type || "expense").toLowerCase()
+                                    },
+                                    action: txId ? "edit" : "add"
+                                }
+                            }));
+                        }
+
+                        // Auto-hide modal after 1 second
+                        setTimeout(() => {
+                            closeModal();
+                            console.log("⏹ Modal auto-closed after transaction submit");
+                        }, 1000);
+
                     } else if (res.error === "login_required") {
+                        console.warn("⚠️ Login required, redirecting...");
                         window.location.href = "/userauths/login/";
                     } else {
-                        alert(res.error || "Failed to save transaction.");
-                        console.error(res.error);
+                        // Show inline error
+                        if (errorContainer) {
+                            errorContainer.textContent = res.error || "Failed to save transaction.";
+                            errorContainer.style.display = "block";
+                            console.error("❌ Transaction error:", res.error);
+
+                            setTimeout(() => {
+                                if (errorContainer) errorContainer.style.display = "none";
+                            }, 5000);
+                        }
                     }
                 })
-                .catch(err => console.error("Error submitting transaction:", err));
+                .catch(err => {
+                    if (errorContainer) {
+                        errorContainer.textContent = "Network error. Please try again.";
+                        errorContainer.style.display = "block";
+                        setTimeout(() => { errorContainer.style.display = "none"; }, 5000);
+                    }
+                    console.error("❌ Error submitting transaction:", err);
+                });
             });
         })
-        .catch(err => console.error("Failed to load modal:", err));
+        .catch(err => console.error("❌ Failed to load modal:", err));
 }
 
 // Delete Transaction
@@ -140,7 +188,6 @@ function deleteTransaction(txId) {
 
                 updateTopSummary(res);
 
-                // Dispatch budget update
                 window.dispatchEvent(new CustomEvent("transaction:changed", {
                     detail: {
                         transaction: {
@@ -170,6 +217,9 @@ function closeModal() {
     if (modal) modal.remove();
     document.body.classList.remove("modal-open");
 }
+
+// The rest of your transaction update and summary functions remain unchanged...
+
 
 // Update Transaction List
 function updateTransactionList(tx) {

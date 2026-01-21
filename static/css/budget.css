@@ -56,15 +56,16 @@
 .month-nav a:hover {
     text-decoration: underline;
 }
+
+/* Budget List */
 .budget-list {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: 500px; /* Adjust as needed */
-    overflow-y: auto; /* Scroll if overflow */
-    padding-right: 6px; /* prevent content cutoff */
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 6px;
 }
-
 
 /* Budget Card */
 .budget-card {
@@ -228,4 +229,26 @@
 
 .popup-actions button:hover {
     opacity: 0.85;
+}
+
+/* Budget Progress */
+.budget-progress {
+    height: 12px;
+    border-radius: 6px;
+    background: #4caf50;
+    width: 0%;
+    transition: width 0.5s ease, background 0.5s ease;
+}
+
+.budget-card.budget-exceeded {
+    border: 1px solid #e53935;
+}
+
+.budget-card.pulse-red {
+    animation: pulseRed 1s infinite alternate;
+}
+
+@keyframes pulseRed {
+    0% { box-shadow: 0 0 0 rgba(229, 57, 53, 0.7); }
+    100% { box-shadow: 0 0 15px rgba(229, 57, 53, 1); }
 }

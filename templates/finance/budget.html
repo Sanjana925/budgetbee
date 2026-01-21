@@ -8,7 +8,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="budget-container" id="budgetContainer">
+<div class="budget-container" id="budgetContainer"
+     data-get-budget-spent-url="{% url 'finance:get_budget_spent' %}"
+     data-save-budget-url="{% url 'finance:save_budget' %}">
 
     <!-- Header -->
     <div class="budget-header">
@@ -31,6 +33,7 @@
     <div class="budget-list">
         {% for cat in categories %}
             <div class="budget-card" data-id="{{ cat.id }}">
+                
                 <!-- Row 1: icon + name -->
                 <div class="budget-row-top">
                     <span class="icon">{{ cat.icon }}</span>
@@ -40,7 +43,7 @@
                 <!-- Row 2: progress + amount + edit -->
                 <div class="budget-row-bottom">
                     <div class="progress-container">
-                        <div class="budget-progress progress-bar" style="width: {{ cat.percent|default:0 }}%;"></div>
+                        <div class="budget-progress progress-bar budget-{{ cat.id }}"></div>
                     </div>
                     <div class="amount">
                         Rs <span class="spent">{{ cat.spent|default:0 }}</span> /
@@ -65,14 +68,17 @@
         <h3 id="popupTitle">Set Budget</h3>
         <form id="budgetForm">
             {% csrf_token %}
+            
             <label>Category:</label>
             <select name="category" required>
                 {% for cat in categories %}
                     <option value="{{ cat.id }}">{{ cat.name }}</option>
                 {% endfor %}
             </select>
+
             <label>Budget Amount (Rs):</label>
             <input type="number" name="amount" min="0" step="0.01" required>
+
             <div class="popup-actions">
                 <button type="button" id="cancelBudget">Cancel</button>
                 <button type="submit">Save</button>
@@ -85,12 +91,6 @@
 {% endblock %}
 
 {% block extra_js %}
-
 {{ budgets_json|json_script:"budgetsData" }}
-<script>
-const getBudgetSpentUrl = "{% url 'finance:get_budget_spent' %}";
-const saveBudgetUrl = "{% url 'finance:save_budget' %}";
-</script>
-
 <script src="{% static 'js/budget.js' %}"></script>
 {% endblock %}
